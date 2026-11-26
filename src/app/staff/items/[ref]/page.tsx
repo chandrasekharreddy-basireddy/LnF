@@ -28,9 +28,14 @@ export default async function StaffItemPage({ params }: { params: Promise<{ ref:
         <Link className="small" href="/staff">
           ← Desk
         </Link>
-        <span className="mono small" style={{ background: 'var(--brand-soft)', padding: '4px 10px', borderRadius: 6 }}>
-          {item.ref}
-        </span>
+        <div className="row" style={{ gap: 8 }}>
+          <Link className="btn btn-ghost btn-sm" href={`/staff/items/${item.ref}/label`}>
+            Print label
+          </Link>
+          <span className="mono small" style={{ background: 'var(--brand-soft)', padding: '4px 10px', borderRadius: 6 }}>
+            {item.ref}
+          </span>
+        </div>
       </div>
 
       <div className="row" style={{ gap: 8, marginBottom: 8 }}>

@@ -36,6 +36,9 @@ export default async function StaffPage() {
           <p className="muted small">Every action here writes an audit entry.</p>
         </div>
         <div className="row">
+          <Link className="btn btn-secondary btn-sm" href="/staff/scan">
+            Scan a tag
+          </Link>
           <Link className="btn btn-secondary btn-sm" href="/staff/disposal">
             Disposal queue
           </Link>

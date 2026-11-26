@@ -320,3 +320,38 @@ table.data tr:last-child td { border-bottom: 0; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
 }
+
+
+/* ---------- custody label (2in x 3in thermal) ---------- */
+.custody-label {
+  width: 2in;
+  min-height: 3in;
+  padding: 0.1in;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-family: var(--font);
+  color: #000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.06in;
+}
+.custody-label header { display: flex; justify-content: space-between; gap: 4px; font-size: 6pt; text-transform: uppercase; letter-spacing: 0.04em; }
+.label-desk { font-weight: 700; }
+.label-kind { color: #333; }
+.label-ref { font-family: var(--mono); font-size: 13pt; font-weight: 700; letter-spacing: 0.02em; margin: 0; }
+.label-meta { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px; margin: 0; font-size: 6pt; }
+.label-meta dt { color: #444; text-transform: uppercase; letter-spacing: 0.03em; }
+.label-meta dd { margin: 0; font-weight: 600; }
+.label-qr { flex: 1; display: grid; place-items: center; }
+.label-qr svg { width: 1.05in; height: 1.05in; }
+.label-foot { font-size: 5.5pt; text-align: center; margin: 0; color: #333; }
+
+@media print {
+  .site-header, .site-footer, .skip, .no-print { display: none !important; }
+  main { padding: 0 !important; }
+  .wrap { max-width: none; padding: 0; }
+  body { background: #fff; }
+  .custody-label { border: 0; border-radius: 0; width: 2in; min-height: 3in; }
+  @page { size: 2in 3in; margin: 0.05in; }
+}

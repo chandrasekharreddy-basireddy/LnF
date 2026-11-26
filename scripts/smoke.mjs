@@ -29,6 +29,9 @@ const routes = [
   '/sign-in',
   '/claims',
   '/staff',
+  '/staff/scan',
+  '/staff/disposal',
+  '/staff/items/LF-2026-0007/label',
   '/admin',
   '/api/health',
   '/api/cron/housekeeping',
@@ -152,6 +155,18 @@ try {
 
   const staff = await get(BASE + '/staff', { redirect: 'manual' });
   log('CHECK /staff unauthenticated ->', staff.status, staff.headers.get('location'));
+  for (const guarded of ['/staff/scan', '/staff/disposal', '/staff/items/LF-2026-0007/label', '/account/saved']) {
+    const res = await get(BASE + guarded, { redirect: 'manual' });
+    const loc = res.headers.get('location') ?? '';
+    const body = await res.text();
+    // Next streams the shell, so a guarded page may redirect with 307 or hand
+    // the redirect to the client in a 200 payload. Both are correct; rendering
+    // the staff UI is not.
+    const redirected = (res.status === 307 && loc.includes('/sign-in')) || /\/sign-in\?next=/.test(body);
+    const leaked = /Disposal queue|Scan a tag|Saved searches/.test(body);
+    log(`CHECK ${guarded} guarded ->`, redirected && !leaked, `(${res.status})`);
+  }
+
 
   const claims = await (await get(BASE + '/claims')).text();
   log('CHECK /claims asks for sign in:', /Sign in to see the claims/.test(claims));
