@@ -2,7 +2,7 @@
   "name": "lnf",
   "version": "1.0.0",
   "private": true,
-  "description": "L&F \u2014 a lost and found platform. Report, browse, verify, recover.",
+  "description": "L&F — a lost and found platform. Report, browse, verify, recover.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -12,7 +12,8 @@
     "check": "npm run typecheck && npm run build",
     "smoke": "node scripts/smoke.mjs",
     "shots": "node scripts/shots.mjs",
-    "render": "node scripts/render.mjs"
+    "render": "node scripts/render.mjs",
+    "lint": "eslint . --max-warnings=0"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
@@ -23,9 +24,15 @@
     "sharp": "^0.35.5"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
     "@types/node": "^26.6.11",
     "@types/react": "^19.3.3",
     "@types/react-dom": "^19.3.0",
-    "typescript": "^7.0.2"
+    "eslint": "^9.39.5",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.14.0",
+    "typescript": "5.9",
+    "typescript-eslint": "^8.74.0"
   }
 }

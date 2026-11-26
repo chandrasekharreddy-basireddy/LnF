@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { SAFETY } from '@/lib/copy';
 import { env } from '@/lib/env';
 import { SafetyNote } from '@/components/safety-note';
 

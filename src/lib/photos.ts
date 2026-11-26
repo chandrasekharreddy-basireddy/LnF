@@ -63,7 +63,7 @@ export async function processAndUploadPhotos(
         continue;
       }
 
-      const altRaw = `${title} — photo ${i + 1}`;
+      const altRaw = `${title} — view ${i + 1}`;
       const alt = altRaw.length < 4 ? 'Item photo' : altRaw.slice(0, 200);
       const { error: rowError } = await supabase.from('item_images').insert({
         item_id: item.id,

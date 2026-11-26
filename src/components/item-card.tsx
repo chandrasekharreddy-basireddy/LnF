@@ -10,7 +10,7 @@ export function ItemCard({ item }: { item: PublicItem }) {
     <Link href={`/items/${item.ref}`} className="item-card">
       <div className="thumb">
         {item.coverUrl ? (
-          <img src={item.coverUrl} alt={`${item.title} — photo`} width={84} height={84} loading="lazy" />
+          <img src={item.coverUrl} alt={item.title} width={84} height={84} loading="lazy" />
         ) : (
           <CategoryIcon category={item.category} size={30} />
         )}
