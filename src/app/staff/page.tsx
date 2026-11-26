@@ -35,9 +35,14 @@ export default async function StaffPage() {
           <h1 style={{ marginBottom: 4 }}>Today at the counter</h1>
           <p className="muted small">Every action here writes an audit entry.</p>
         </div>
-        <Link className="btn btn-sm" href="/report/found">
-          Log an item
-        </Link>
+        <div className="row">
+          <Link className="btn btn-secondary btn-sm" href="/staff/disposal">
+            Disposal queue
+          </Link>
+          <Link className="btn btn-sm" href="/report/found">
+            Log an item
+          </Link>
+        </div>
       </div>
 
       <div className="grid grid-3" style={{ marginBottom: 24 }}>

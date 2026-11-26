@@ -198,6 +198,15 @@ export function startMock(port = 54321) {
     if (path === '/rest/v1/rpc/my_saved_items' || path === '/rest/v1/rpc/my_saved_searches') {
       return send(res, 200, []);
     }
+    if (path === '/rest/v1/rpc/disposal_queue') {
+      return send(res, 200, []);
+    }
+    if (path === '/rest/v1/retention_policies') {
+      return send(res, 200, [
+        { category: 'electronics', retention_days: 90, requires_photo_id: true, auto_hide_photos: false, notes: null },
+        { category: 'clothing', retention_days: 30, requires_photo_id: false, auto_hide_photos: false, notes: null },
+      ]);
+    }
     if (path === '/rest/v1/rpc/is_item_saved') {
       return send(res, 200, false);
     }

@@ -53,6 +53,10 @@ export const ERRORS: Record<string, string> = {
   EMPTY: 'Write something first.',
   TOO_LONG: 'Keep it under 2000 characters.',
   BLOCKED: 'That message was held back.',
+  BAD_DISPOSITION: 'Choose what happened to the item.',
+  NOTE_REQUIRED: 'Write a short note. The audit log needs a reason.',
+  ALREADY_DISPOSED: 'This item already has a disposition recorded.',
+  ALREADY_RETURNED: 'This item was returned to its owner, so it cannot be disposed of.',
 };
 
 export function errorText(code: string | undefined): string {

@@ -203,6 +203,36 @@ export async function claimThread(ref: string): Promise<ClaimThread | null> {
   }
 }
 
+export async function disposalQueue() {
+  try {
+    const supabase = await supabaseServer();
+    const { data } = await supabase.rpc('disposal_queue');
+    return (data ?? []) as {
+      ref: string; title: string; category: string; status: string; zone: string | null;
+      eventDate: string; expiresAt: string; daysLeft: number;
+      disposition: string | null; suggested: string;
+    }[];
+  } catch {
+    return [];
+  }
+}
+
+export async function retentionPolicies() {
+  try {
+    const supabase = await supabaseServer();
+    const { data } = await supabase
+      .from('retention_policies')
+      .select('category,retention_days,requires_photo_id,auto_hide_photos,notes')
+      .order('retention_days', { ascending: false });
+    return (data ?? []) as {
+      category: string; retention_days: number; requires_photo_id: boolean;
+      auto_hide_photos: boolean; notes: string | null;
+    }[];
+  } catch {
+    return [];
+  }
+}
+
 export async function mySavedItems(): Promise<PublicItem[]> {
   try {
     const supabase = await supabaseServer();

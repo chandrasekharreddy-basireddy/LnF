@@ -136,6 +136,33 @@ export async function setItemStatus(_prev: StaffState, formData: FormData): Prom
   }
 }
 
+export async function disposeItem(_prev: StaffState, formData: FormData): Promise<StaffState> {
+  const user = await currentUser();
+  if (!isStaff(user)) return { ok: false, error: 'Staff access only.' };
+
+  const itemRef = str(formData.get('item_ref'));
+  const disposition = str(formData.get('disposition'));
+  const note = clamp(str(formData.get('note')), 300);
+
+  try {
+    const supabase = await supabaseServer();
+    const { data, error } = await supabase.rpc('dispose_item', {
+      p_ref: itemRef,
+      p_disposition: disposition,
+      p_note: note,
+    });
+    if (error) return { ok: false, error: 'Could not record that disposition.' };
+    const result = data as { ok: boolean; error?: string };
+    if (!result?.ok) return { ok: false, error: errorText(result?.error) };
+
+    revalidatePath('/staff/disposal');
+    revalidatePath('/staff');
+    return { ok: true, message: 'Recorded. It is in the audit log.' };
+  } catch {
+    return { ok: false, error: 'Could not reach the desk.' };
+  }
+}
+
 export async function closeReport(_prev: StaffState, formData: FormData): Promise<StaffState> {
   const user = await currentUser();
   if (!isStaff(user)) return { ok: false, error: 'Staff access only.' };

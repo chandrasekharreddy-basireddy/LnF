@@ -1,9 +1,11 @@
 import type { Metadata } from 'next';
 import { RETENTION, RETENTION_ROWS } from '@/lib/retention';
+import { retentionPolicies } from '@/lib/data';
 
 export const metadata: Metadata = { title: 'Retention', description: 'How long L&F keeps each kind of record.' };
 
-export default function RetentionPage() {
+export default async function RetentionPage() {
+  const policies = await retentionPolicies();
   return (
     <article className="section" style={{ marginTop: 8, maxWidth: 760 }}>
       <p className="eyebrow">Legal</p>
@@ -31,6 +33,49 @@ export default function RetentionPage() {
                   <td className="muted">{row.then}</td>
                 </tr>
               ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <h2 style={{ marginTop: 32 }}>How long a listing lives, by category</h2>
+      <p>
+        A sandwich and a laptop charger should not share a shelf life. The window is set per category, and this table is
+        read from the same table the job uses — it cannot drift.
+      </p>
+      <div className="panel" style={{ marginTop: 16 }}>
+        <div className="table-wrap">
+          <table className="data">
+            <thead>
+              <tr>
+                <th scope="col">Category</th>
+                <th scope="col">Window</th>
+                <th scope="col">At handover</th>
+              </tr>
+            </thead>
+            <tbody>
+              {policies.length ? (
+                policies.map((policy) => (
+                  <tr key={policy.category}>
+                    <td style={{ textTransform: 'capitalize' }}>{policy.category}</td>
+                    <td>{policy.retention_days} days</td>
+                    <td className="muted">
+                      {[
+                        policy.requires_photo_id ? 'photo ID checked' : null,
+                        policy.auto_hide_photos ? 'photo withheld' : null,
+                      ]
+                        .filter(Boolean)
+                        .join(', ') || 'standard handover'}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={3} className="muted">
+                    Category windows are unavailable right now; the default is {RETENTION.listingDays} days.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
