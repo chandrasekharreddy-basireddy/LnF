@@ -40,6 +40,8 @@ and never passes a raw row through. Three rules hold the privacy boundary:
 | Decide a claim | `staff_decide_claim(ref, decision, reason)` → issues a 6-character code, stores `sha256(code)`, sets item `claimed` |
 | Handover | `staff_confirm_handover(item_ref, code)` → verifies hash, marks code used, item `recovered`, writes `handover_records` + audit + notifications |
 | Daily job | `housekeeping()` — expiry, retention, nudges; returns photo paths for the Vercel job to delete |
+| Email | `sendOrQueue` tries Brevo; on refusal it writes `email_outbox` with a dedupe key, and the cron retries up to 3 times |
+| Headers | `src/proxy.ts` (Next 16's replacement for middleware) mints a nonce and sets a strict CSP on request and response |
 
 ## Matching
 

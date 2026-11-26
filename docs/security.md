@@ -75,6 +75,22 @@ or listed", implemented rather than promised.
 - `sensitive_hidden_photo` removes the photo from the public page, the cards and the
   share preview — the description stands alone.
 
+## Response headers
+
+`src/proxy.ts` sets, per request: `default-src 'self'`, a nonce'd `script-src` with
+`strict-dynamic`, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`,
+`frame-ancestors 'none'`, and `connect-src`/`img-src` limited to the app plus the one Supabase
+origin. `style-src` allows inline styles because the UI uses `style` attributes; that is the
+one concession, and it cannot execute script.
+
+## Email
+
+Every send goes through `sendOrQueue`. A refused send becomes an `email_outbox` row with a
+dedupe key (`claim_decided:CLM-2026-0001`), a 3-attempt cap and a 5-minute lease taken with
+`FOR UPDATE SKIP LOCKED`, so two cron runs cannot send the same message twice. A member may
+only queue mail to their own address; staff may queue to the finder address they are writing
+to. That keeps the outbox from becoming an open relay.
+
 ## Logging
 
 - `audit_logs` records actor, action, resource and a small JSON detail: `item_created`,

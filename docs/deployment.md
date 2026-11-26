@@ -100,7 +100,10 @@ Two independent schedules; keep both.
 | Job | Where | What it covers |
 | --- | --- | --- |
 | `pg_cron` `lnf-housekeeping` at 02:15 UTC | Supabase | expiry, retention deletes, nudges — works with no secrets |
-| `/api/cron/housekeeping` at 02:00 UTC | Vercel (`vercel.json`) | same job, **plus** deleting the photos of purged listings |
+| `/api/cron/housekeeping` at 02:00 UTC | Vercel (`vercel.json`) | same job, **plus** photo deletion and **email retries** from `email_outbox` |
+
+The Vercel run also drains `email_outbox`: any send that Brevo refused during the day is
+retried up to three times, keyed so a retry can never become a second email.
 
 The Vercel job returns 503 with a clear message when `SUPABASE_SERVICE_ROLE_KEY` is absent —
 that is expected, not an error. Add the key and photos get cleaned up too. Vercel sends
@@ -113,7 +116,19 @@ select jobname, schedule, active from cron.job;
 select status, return_message, start_time from cron.job_run_details order by start_time desc limit 5;
 ```
 
-## 6. Launch checklist
+## 6. What CI proves before you deploy
+
+Two jobs run on every push. `verify`: `npm run lint` → `typecheck` → `build` → a guardrail
+that fails if a private field name (`answer_hash`, `bin_code`, `finder_contact`) appears in
+the client bundle. `e2e`: builds against the local mock, then runs Playwright + axe at
+360/768/1440 — search, filter persistence, the privacy assertions on item detail, 360px
+overflow, the skip link, and zero critical or serious axe violations on five routes.
+
+Playwright needs its own Chromium: `npx playwright install --with-deps chromium` (CI does this
+for you). `npm run e2e` rebuilds with the mock URL, so run `npm run build` again afterwards if
+you want a production build in `.next`.
+
+## 7. Launch checklist
 
 - [ ] `/api/health` returns `ok` and `database: reachable`
 - [ ] Sign in with a real address; the code email arrives within a minute

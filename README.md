@@ -16,6 +16,8 @@ Next.js 16 (App Router) · TypeScript · Postgres/RLS · Supabase Storage · Bre
 
 | Promise | Enforced by |
 | --- | --- |
+| Injected script has no way in | nonce-based CSP minted per request in `src/proxy.ts`, asserted by smoke |
+| A failed email is retried, never lost | `email_outbox` + `sendOrQueue`, dispatched by the daily cron with a dedupe key |
 | Public pages can never see answers, contacts, serials, bins | `public_items` / `public_item_images` views + column-list projection function; base tables have no `anon` grant |
 | Staff pages need a real role | `is_staff()` / `is_admin()` checked inside `SECURITY DEFINER` functions, not in the page |
 | A claim cannot be double-released | partial unique index on open claims, handover code hashed and single-use, `handover_records` + audit row |
@@ -66,7 +68,9 @@ Admins grant the rest from `/admin/users`.
 | --- | --- |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run build` | production build |
-| `npm run smoke` | starts a local mock of the Supabase API, renders 21 routes, asserts content and privacy |
+| `npm run lint` | ESLint 9 flat config: typescript-eslint, react-hooks, jsx-a11y, no `any` |
+| `npm run smoke` | starts a local mock of the Supabase API, renders 21 routes, asserts content, privacy, CSP and the redirect guard |
+| `npm run e2e` | builds against the mock, then runs Playwright + axe at 360/768/1440 (39 tests) |
 | `npm run shots` | screenshots key pages (needs a browser that can reach localhost) |
 
 The mock exists because CI and sandboxes usually cannot reach the live project. It mirrors
@@ -84,7 +88,8 @@ docs/               deployment, architecture, security, operations, privacy
 
 ## Status
 
-Feature-complete and building clean. Deployed with a real Supabase project; the pages were
-verified against a local mock of the API (see `npm run smoke`). Two things are deliberately
-left to a human: connecting Vercel, and pasting the service-role key if you want photo
-cleanup in the Vercel cron. Neither blocks launch — `pg_cron` already runs retention.
+Feature-complete, building clean, and gated by two CI jobs: `verify` (lint → typecheck →
+build → client-bundle guardrail) and `e2e` (Playwright + axe, 37 passing, 2 viewport-specific
+skips). Two things are deliberately left to a human: connecting Vercel, and pasting the
+service-role key if you want photo cleanup and email retries driven by the Vercel cron.
+Neither blocks launch — `pg_cron` already runs retention.
