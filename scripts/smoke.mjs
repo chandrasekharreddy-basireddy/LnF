@@ -5,9 +5,10 @@
 import { spawn } from 'node:child_process';
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { setTimeout as sleep } from 'node:timers/promises';
+import net from 'node:net';
 import { startMock } from './mock-supabase.mjs';
 
-const PORT = 3111;
+const PORT = Number(process.env.SMOKE_PORT ?? 3400 + Math.floor(Math.random() * 400));
 const MOCK_PORT = 54321;
 const BASE = `http://127.0.0.1:${PORT}`;
 
@@ -36,9 +37,20 @@ const routes = [
 ];
 
 const out = [];
-const log = (...a) => out.push(a.join(' '));
+const log = (...a) => {
+  out.push(a.join(' '));
+  try {
+    writeFileSync('/tmp/smoke.txt', out.join('\n') + '\n');
+  } catch {}
+};
 
-const mock = await startMock(MOCK_PORT);
+let mock;
+try {
+  mock = await startMock(MOCK_PORT);
+} catch (err) {
+  writeFileSync('/tmp/smoke.txt', `MOCK PORT ${MOCK_PORT} UNAVAILABLE: ${err.message}\n`);
+  process.exit(1);
+}
 
 const child = spawn('npx', ['next', 'start', '-p', String(PORT)], {
   cwd: '/scratch/work/lnf',
@@ -56,15 +68,33 @@ let serverLog = '';
 child.stdout.on('data', (d) => (serverLog += d.toString()));
 child.stderr.on('data', (d) => (serverLog += d.toString()));
 
+function canConnect(port) {
+  return new Promise((resolve) => {
+    const socket = net.connect({ port, host: '127.0.0.1' });
+    const finish = (ok) => {
+      socket.destroy();
+      resolve(ok);
+    };
+    socket.once('connect', () => finish(true));
+    socket.once('error', () => finish(false));
+    socket.setTimeout(1000, () => finish(false));
+  });
+}
+
 async function waitForServer(tries = 60) {
   for (let i = 0; i < tries; i++) {
-    try {
-      const res = await fetch(`${BASE}/api/health`, { signal: AbortSignal.timeout(5000) });
-      if (res.status) return true;
-    } catch {}
+    if (await canConnect(PORT)) return true;
     await sleep(500);
   }
   return false;
+}
+
+/** fetch with a hard deadline that cannot be ignored by the socket layer. */
+function get(url, init = {}) {
+  return Promise.race([
+    fetch(url, init),
+    new Promise((_, reject) => setTimeout(() => reject(new Error(`deadline ${url}`)), 20000)),
+  ]);
 }
 
 try {
@@ -76,7 +106,7 @@ try {
 
   for (const route of routes) {
     const started = Date.now();
-    const res = await fetch(BASE + route, { redirect: 'manual', signal: AbortSignal.timeout(15000) });
+    const res = await get(BASE + route, { redirect: 'manual' });
     const body = await res.text();
     const h1 = (body.match(/<h1[^>]*>([\s\S]*?)<\/h1>/) ?? [])[1] ?? '';
     log(
@@ -87,7 +117,15 @@ try {
     );
   }
 
-  const home = await (await fetch(BASE + '/')).text();
+  const homeRes = await get(BASE + '/');
+  const home = await homeRes.text();
+  const csp = homeRes.headers.get('content-security-policy') ?? '';
+  const nonce = (csp.match(/'nonce-([^']+)'/) ?? [])[1] ?? '';
+  log('');
+  log('CHECK CSP header present:', csp.includes("default-src 'self'") && csp.includes("frame-ancestors 'none'"));
+  log('CHECK CSP nonce minted per request:', nonce.length > 10);
+  log('CHECK script tags carry that nonce:', nonce ? home.includes(`nonce="${nonce}"`) : false);
+  log('CHECK CSP has no unsafe-eval in prod:', !csp.includes("'unsafe-eval'"));
   log('');
   log('CHECK home shows board count 6:', /<b>6<\/b>\s*<span>Listings on the board/.test(home));
   log('CHECK home shows open found 4:', /<b>4<\/b>\s*<span>Waiting at the desk/.test(home));
@@ -95,47 +133,50 @@ try {
   log('CHECK home safety copy:', /Never pay to get an item back/.test(home));
   log('CHECK home build stamp:', /build (<!-- -->)?\d{4}-\d{2}-\d{2}/.test(home));
 
-  const browse = await (await fetch(BASE + '/browse?q=earbuds')).text();
+  const browse = await (await get(BASE + '/browse?q=earbuds')).text();
   log('CHECK search "earbuds" matches earbuds item:', /Black wireless earbuds/.test(browse));
   log('CHECK search count text:', /match your filters/.test(browse) && /\d+/.test(browse));
 
-  const empty = await (await fetch(BASE + '/browse?q=nothingmatches')).text();
+  const empty = await (await get(BASE + '/browse?q=nothingmatches')).text();
   log('CHECK no-results empty state:', /Nothing matches those filters yet/.test(empty));
 
-  const detail = await (await fetch(BASE + '/items/LF-2026-0007')).text();
+  const detail = await (await get(BASE + '/items/LF-2026-0007')).text();
   log('CHECK detail shows question:', /Bluetooth name of the case/.test(detail));
   log('CHECK detail shows custody:', /Main Gate &amp; Security Desk/.test(detail));
   log('CHECK detail has no answer leak:', !/redmi buds/i.test(detail));
   log('CHECK detail has no private keys:', !/answer_hash|contact_email|reporter_id|serial_number/i.test(detail));
   log('CHECK detail has claim sign-in CTA:', /Sign in to claim/.test(detail));
 
-  const sensitive = await (await fetch(BASE + '/items/LF-2026-0009')).text();
+  const sensitive = await (await get(BASE + '/items/LF-2026-0009')).text();
   log('CHECK sensitive item hides photo:', /No photo shown/.test(sensitive) && !/bottle\.webp/.test(sensitive));
 
-  const staff = await fetch(BASE + '/staff', { redirect: 'manual' });
+  const staff = await get(BASE + '/staff', { redirect: 'manual' });
   log('CHECK /staff unauthenticated ->', staff.status, staff.headers.get('location'));
 
-  const claims = await (await fetch(BASE + '/claims')).text();
+  const claims = await (await get(BASE + '/claims')).text();
   log('CHECK /claims asks for sign in:', /Sign in to see the claims/.test(claims));
 
   for (const evil of ['//evil.com', 'https://evil.com', '/\\evil.com']) {
-    const res = await fetch(
+    const res = await get(
       `${BASE}/auth/confirm?token_hash=abc&type=email&next=${encodeURIComponent(evil)}`,
       { redirect: 'manual' },
     );
     const location = res.headers.get('location') ?? '';
     log(`CHECK open redirect blocked (${evil}) ->`, res.status, location.replace(BASE, ''));
   }
-  const okNext = await fetch(`${BASE}/auth/confirm?token_hash=abc&type=email&next=%2Fclaims`, { redirect: 'manual' });
+  const okNext = await get(`${BASE}/auth/confirm?token_hash=abc&type=email&next=%2Fclaims`, {
+    redirect: 'manual',
+  });
   log('CHECK safe next still honoured ->', okNext.status, (okNext.headers.get('location') ?? '').replace(BASE, ''));
 
-  const cron = await fetch(BASE + '/api/cron/housekeeping');
+  const cron = await get(BASE + '/api/cron/housekeeping');
   log('CHECK cron without bearer ->', cron.status);
 
-  const health = await (await fetch(BASE + '/api/health')).json();
+  const health = await (await get(BASE + '/api/health')).json();
   log('CHECK health payload:', JSON.stringify(health));
 
   log('');
+  log('DONE');
   log('SERVER ERRORS:', (serverLog.match(/(Error|error)[^\n]{0,160}/g) ?? []).slice(0, 6).join(' || ') || 'none');
 
   mkdirSync('/scratch/work/shots', { recursive: true });

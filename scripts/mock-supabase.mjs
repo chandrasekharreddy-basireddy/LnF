@@ -227,5 +227,8 @@ export function startMock(port = 54321) {
     return send(res, 404, { message: 'not found', path });
   });
 
-  return new Promise((resolve) => server.listen(port, '127.0.0.1', () => resolve(server)));
+  return new Promise((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(port, '127.0.0.1', () => resolve(server));
+  });
 }
