@@ -1,43 +1,31 @@
-'use client';
+import { setTheme } from '@/lib/actions/theme';
 
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-
-type Theme = 'system' | 'light' | 'dark';
-
-const LABEL: Record<Theme, string> = { system: 'Auto', light: 'Light', dark: 'Dark' };
-const NEXT: Record<Theme, Theme> = { system: 'light', light: 'dark', dark: 'system' };
+const OPTIONS = [
+  { value: 'auto', label: 'Auto' },
+  { value: 'light', label: 'Light' },
+  { value: 'dark', label: 'Dark' },
+] as const;
 
 /**
- * The choice is a cookie, not localStorage, so the server can put data-theme on
- * <html> before the first paint. A theme that flashes is worse than no toggle.
+ * A three-way switch that works without JavaScript: each option is a submit
+ * button on a server action that writes the cookie. The server then renders
+ * data-theme on <html> before anything paints.
  */
-export function ThemeToggle({ initial }: { initial: Theme }) {
-  const router = useRouter();
-  const [theme, setTheme] = useState<Theme>(initial);
-
-  const cycle = () => {
-    const next = NEXT[theme];
-    setTheme(next);
-    if (next === 'system') {
-      document.cookie = 'lnf-theme=; path=/; max-age=0; samesite=lax';
-      document.documentElement.removeAttribute('data-theme');
-    } else {
-      document.cookie = `lnf-theme=${next}; path=/; max-age=31536000; samesite=lax`;
-      document.documentElement.setAttribute('data-theme', next);
-    }
-    router.refresh();
-  };
-
+export function ThemeToggle({ current }: { current: 'auto' | 'light' | 'dark' }) {
   return (
-    <button
-      type="button"
-      className="theme-toggle"
-      onClick={cycle}
-      aria-label={`Theme: ${LABEL[theme]}. Activate to switch to ${LABEL[NEXT[theme]]}.`}
-      title={`Theme: ${LABEL[theme]}`}
-    >
-      {LABEL[theme]}
-    </button>
+    <form action={setTheme} className="theme-switch" aria-label="Colour theme">
+      {OPTIONS.map((option) => (
+        <button
+          key={option.value}
+          type="submit"
+          name="theme"
+          value={option.value}
+          aria-pressed={current === option.value}
+          title={`${option.label} theme`}
+        >
+          {option.label}
+        </button>
+      ))}
+    </form>
   );
 }

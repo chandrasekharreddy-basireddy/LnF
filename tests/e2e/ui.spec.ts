@@ -21,14 +21,16 @@ test.describe('interface', () => {
     await expect(page.getByRole('dialog', { name: 'Quick search' })).toHaveCount(0);
   });
 
-  test('theme choice survives a reload, with no flash', async ({ page }) => {
+  test('theme choice is server-rendered and survives a reload', async ({ page }) => {
     await page.goto('/');
-    await page.getByRole('button', { name: /^Theme: Auto/ }).click();
-    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+    const switcher = page.getByRole('form', { name: 'Colour theme' });
+    await switcher.getByRole('button', { name: 'Dark' }).click();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
 
     await page.reload();
-    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
-    await expect(page.getByRole('button', { name: /^Theme: Light/ })).toBeVisible();
+    // rendered by the server from the cookie, so it is set before first paint
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    await expect(page.getByRole('button', { name: 'Dark' })).toHaveAttribute('aria-pressed', 'true');
   });
 
   test('photo viewer opens, moves and closes by keyboard', async ({ page }) => {

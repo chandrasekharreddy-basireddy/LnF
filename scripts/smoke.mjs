@@ -129,6 +129,10 @@ try {
   log('CHECK CSP nonce minted per request:', nonce.length > 10);
   log('CHECK script tags carry that nonce:', nonce ? home.includes(`nonce="${nonce}"`) : false);
   log('CHECK CSP has no unsafe-eval in prod:', !csp.includes("'unsafe-eval'"));
+
+  const darkRes = await get(BASE + '/', { headers: { cookie: 'lnf-theme=dark' } });
+  const darkHtml = await darkRes.text();
+  log('CHECK theme cookie renders data-theme server-side:', /<html[^>]*data-theme="dark"/.test(darkHtml));
   log('');
   log('CHECK home shows board count 6:', /<b>6<\/b>\s*<span>Listings on the board/.test(home));
   log('CHECK home shows open found 4:', /<b>4<\/b>\s*<span>Waiting at the desk/.test(home));

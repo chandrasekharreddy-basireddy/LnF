@@ -5,7 +5,7 @@ import { isStaff } from '@/lib/data';
 import { ThemeToggle } from './theme-toggle';
 import { CommandPalette } from './command-palette';
 
-export function SiteHeader({ user }: { user: SessionUser | null }) {
+export function SiteHeader({ user, theme }: { user: SessionUser | null; theme?: 'auto' | 'light' | 'dark' }) {
   return (
     <header className="site-header">
       <div className="wrap header-row">
@@ -34,7 +34,7 @@ export function SiteHeader({ user }: { user: SessionUser | null }) {
             </Link>
           )}
           <CommandPalette staff={isStaff(user)} />
-          <ThemeToggle initial="system" />
+          <ThemeToggle current={theme ?? 'auto'} />
         </nav>
       </div>
     </header>
