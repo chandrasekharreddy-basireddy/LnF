@@ -7,7 +7,7 @@ import { currentUser } from '@/lib/data';
 import { errorText } from '@/lib/copy';
 import { bool, clamp, isValidDate, str, todayISO } from '@/lib/validation';
 import { processAndUploadPhotos } from '@/lib/photos';
-import { sendEmail, templates } from '@/lib/email';
+import { sendOrQueue, templates } from '@/lib/email';
 
 export type ReportState = { ok: boolean; error?: string; fieldErrors?: Record<string, string> };
 
@@ -80,10 +80,13 @@ export async function createReport(_prev: ReportState, formData: FormData): Prom
     await processAndUploadPhotos(files, user.id, ref, title);
   }
 
-  if (user.email) {
-    const mail = templates.itemPublished(ref, title, kind);
-    await sendEmail({ to: user.email, ...mail });
-  }
+  await sendOrQueue({
+    to: user.email,
+    mail: templates.itemPublished(ref, title, kind),
+    eventType: 'item_published',
+    payload: { ref, title, kind },
+    dedupeKey: `item_published:${ref}`,
+  });
 
   revalidatePath('/browse');
   revalidatePath('/');

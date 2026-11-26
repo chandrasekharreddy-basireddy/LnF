@@ -6,7 +6,7 @@ import { supabaseServer } from '@/lib/supabase-server';
 import { currentUser } from '@/lib/data';
 import { errorText } from '@/lib/copy';
 import { clamp, str } from '@/lib/validation';
-import { sendEmail, templates } from '@/lib/email';
+import { sendOrQueue, templates } from '@/lib/email';
 
 export type ClaimState = { ok: boolean; error?: string; fieldErrors?: Record<string, string> };
 
@@ -41,10 +41,13 @@ export async function submitClaim(_prev: ClaimState, formData: FormData): Promis
     return { ok: false, error: 'Could not reach the board. Check your connection and try again.' };
   }
 
-  if (user.email) {
-    const mail = templates.claimReceived(claimRef, ref);
-    await sendEmail({ to: user.email, ...mail });
-  }
+  await sendOrQueue({
+    to: user.email,
+    mail: templates.claimReceived(claimRef, ref),
+    eventType: 'claim_received',
+    payload: { claimRef, itemTitle: ref },
+    dedupeKey: `claim_received:${claimRef}`,
+  });
   revalidatePath('/claims');
   redirect(`/claims/${claimRef}?new=1`);
 }

@@ -1,4 +1,5 @@
 import { env } from './env';
+import { supabaseServer } from './supabase-server';
 
 /** Everything interpolated into an email body goes through here. */
 const esc = (value: unknown): string =>
@@ -123,3 +124,66 @@ export const templates = {
     tag: 'match-alert',
   }),
 };
+
+
+/* ------------------------------------------------------------------ outbox */
+
+export type OutboxEvent =
+  | 'item_published'
+  | 'claim_received'
+  | 'claim_decided'
+  | 'finder_thanks'
+  | 'match_alert';
+
+export type RenderedMail = { subject: string; html: string; text: string; tag?: string };
+
+/** Rebuilds the exact email from the payload stored in the outbox. */
+export function renderOutboxMail(eventType: string, payload: Record<string, unknown>): RenderedMail | null {
+  const text = (key: string, fallback = '') => String(payload[key] ?? fallback);
+  switch (eventType) {
+    case 'item_published':
+      return templates.itemPublished(text('ref'), text('title', 'Your item'), text('kind') === 'lost' ? 'lost' : 'found');
+    case 'claim_received':
+      return templates.claimReceived(text('claimRef'), text('itemTitle'));
+    case 'claim_decided':
+      return templates.claimDecided(text('claimRef'), payload.approved === true, text('reason') || null);
+    case 'finder_thanks':
+      return templates.finderThanks(text('ref'), text('title'));
+    case 'match_alert':
+      return templates.matchAlert(text('lostTitle'), text('foundRef'), text('foundTitle'));
+    default:
+      return null;
+  }
+}
+
+/**
+ * Send now; if the provider refuses (or no key is configured), park the message
+ * in `email_outbox` so the daily cron retries it. Returns what happened so a
+ * caller can surface it without failing the user's action.
+ */
+export async function sendOrQueue(opts: {
+  to: string | null | undefined;
+  mail: RenderedMail;
+  eventType: OutboxEvent;
+  payload: Record<string, unknown>;
+  dedupeKey: string;
+}): Promise<'sent' | 'queued' | 'skipped'> {
+  if (!opts.to) return 'skipped';
+
+  const result = await sendEmail({ to: opts.to, ...opts.mail });
+  if (result.ok) return 'sent';
+
+  try {
+    const supabase = await supabaseServer();
+    const { error } = await supabase.rpc('queue_email_retry', {
+      p_dedupe_key: opts.dedupeKey,
+      p_event_type: opts.eventType,
+      p_payload: opts.payload,
+      p_to: opts.to,
+    });
+    if (!error) return 'queued';
+  } catch {
+    // the user's action must not fail because a retry could not be recorded
+  }
+  return 'skipped';
+}

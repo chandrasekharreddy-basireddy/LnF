@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { timingSafeEqual as equal } from 'node:crypto';
 import { env } from '@/lib/env';
 import { supabaseAdmin } from '@/lib/supabase-server';
+import { renderOutboxMail, sendEmail } from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -18,6 +19,46 @@ function timingSafeEqual(a: string, b: string): boolean {
   return equal(left, right);
 }
 
+type OutboxRow = {
+  id: string;
+  dedupeKey: string;
+  eventType: string;
+  to: string;
+  payload: Record<string, unknown>;
+  attempts: number;
+};
+
+type EmailSummary = { attempted: number; sent: number; failed: number; note?: string };
+
+/** Retries queued mail. Runs after housekeeping so a stuck message still ages out. */
+async function dispatchOutbox(admin: NonNullable<ReturnType<typeof supabaseAdmin>>): Promise<EmailSummary> {
+  const summary: EmailSummary = { attempted: 0, sent: 0, failed: 0 };
+
+  const { data, error } = await admin.rpc('claim_email_batch', { p_limit: 25 });
+  if (error) return { ...summary, note: error.message };
+
+  const rows = (data ?? []) as OutboxRow[];
+  for (const row of rows) {
+    summary.attempted += 1;
+    const mail = renderOutboxMail(row.eventType, row.payload);
+    if (!mail) {
+      await admin.rpc('finish_email', { p_id: row.id, p_ok: false, p_error: `unknown event ${row.eventType}` });
+      summary.failed += 1;
+      continue;
+    }
+    const result = await sendEmail({ to: row.to, ...mail });
+    await admin.rpc('finish_email', {
+      p_id: row.id,
+      p_ok: result.ok,
+      p_error: result.ok ? null : `brevo status ${result.status ?? 'unreachable'}`,
+    });
+    if (result.ok) summary.sent += 1;
+    else summary.failed += 1;
+  }
+
+  return summary;
+}
+
 type Summary = {
   expired?: number;
   purged?: number;
@@ -25,6 +66,7 @@ type Summary = {
   notificationsDeleted?: number;
   auditDeleted?: number;
   reportsDeleted?: number;
+  outboxDeleted?: number;
 };
 
 /**
@@ -54,6 +96,7 @@ export async function GET(request: NextRequest) {
   }
 
   const summary = (data ?? {}) as Summary;
+  const email = await dispatchOutbox(admin);
   const paths = summary.photoPaths ?? [];
   let photosDeleted = 0;
 
@@ -71,6 +114,8 @@ export async function GET(request: NextRequest) {
       notificationsDeleted: summary.notificationsDeleted ?? 0,
       auditDeleted: summary.auditDeleted ?? 0,
       reportsDeleted: summary.reportsDeleted ?? 0,
+      outboxDeleted: summary.outboxDeleted ?? 0,
+      email,
       at: new Date().toISOString(),
     },
     { headers: { 'cache-control': 'no-store' } },

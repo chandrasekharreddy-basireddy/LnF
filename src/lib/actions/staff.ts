@@ -5,7 +5,7 @@ import { supabaseServer } from '@/lib/supabase-server';
 import { currentUser, isStaff } from '@/lib/data';
 import { errorText } from '@/lib/copy';
 import { clamp, str } from '@/lib/validation';
-import { sendEmail, templates } from '@/lib/email';
+import { sendOrQueue, templates } from '@/lib/email';
 
 export type StaffState = { ok: boolean; error?: string; message?: string };
 
@@ -46,8 +46,13 @@ export async function decideClaim(_prev: StaffState, formData: FormData): Promis
           .maybeSingle();
         const email = (profile as { email?: string } | null)?.email;
         if (email) {
-          const mail = templates.claimDecided(claimRef, decision === 'approve', reason || null);
-          await sendEmail({ to: email, ...mail });
+          await sendOrQueue({
+            to: email,
+            mail: templates.claimDecided(claimRef, decision === 'approve', reason || null),
+            eventType: 'claim_decided',
+            payload: { claimRef, approved: decision === 'approve', reason: reason || '' },
+            dedupeKey: `claim_decided:${claimRef}`,
+          });
         }
       }
     }
@@ -87,8 +92,13 @@ export async function confirmHandover(_prev: StaffState, formData: FormData): Pr
     const finderEmail = (item as { finder_email?: string; contact_email?: string; title?: string } | null);
     const to = finderEmail?.finder_email || finderEmail?.contact_email;
     if (to && finderEmail?.title) {
-      const mail = templates.finderThanks(itemRef, finderEmail.title);
-      await sendEmail({ to, ...mail });
+      await sendOrQueue({
+        to,
+        mail: templates.finderThanks(itemRef, finderEmail.title),
+        eventType: 'finder_thanks',
+        payload: { ref: itemRef, title: finderEmail.title },
+        dedupeKey: `finder_thanks:${itemRef}`,
+      });
     }
 
     revalidatePath('/staff');
