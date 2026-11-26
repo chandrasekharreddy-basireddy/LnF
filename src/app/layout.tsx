@@ -12,6 +12,13 @@ export const metadata: Metadata = {
   description:
     'Report what you lost, log what you found, and collect it from a staffed desk. No payments, no meeting strangers.',
   applicationName: 'L&F',
+  icons: {
+    icon: [
+      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180' }],
+  },
   formatDetection: { telephone: false, address: false, email: false },
   robots: { index: true, follow: true },
   openGraph: {

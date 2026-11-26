@@ -232,3 +232,17 @@ export function startMock(port = 54321) {
     server.listen(port, '127.0.0.1', () => resolve(server));
   });
 }
+
+
+// CLI: `node scripts/mock-supabase.mjs --serve 54321` (used by playwright.config.ts)
+const invokedDirectly = process.argv[1] && process.argv[1].endsWith('mock-supabase.mjs');
+if (invokedDirectly && process.argv.includes('--serve')) {
+  const port = Number(process.argv[process.argv.indexOf('--serve') + 1] ?? 54321);
+  const server = await startMock(port);
+  console.log(`mock supabase listening on http://127.0.0.1:${port}`);
+  for (const signal of ['SIGINT', 'SIGTERM']) {
+    process.on(signal, () => {
+      server.close(() => process.exit(0));
+    });
+  }
+}
