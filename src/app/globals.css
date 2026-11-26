@@ -145,9 +145,13 @@ p:last-child { margin-bottom: 0; }
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 8px 24px -16px rgba(0, 0, 0, 0.8);
 }
 
-:root[data-theme="dark"] .btn { color: #10231a; }
-:root[data-theme="dark"] .nav a.btn { color: #10231a; }
-:root[data-theme="dark"] .nav a.btn:hover { color: #10231a; }
+/* in dark the brand is light, so primary buttons need dark ink — but only the
+   primary ones; secondary, ghost and danger keep their own foregrounds */
+:root[data-theme="dark"] .btn:not(.btn-secondary):not(.btn-ghost):not(.btn-danger) { color: #10231a; }
+:root[data-theme="dark"] .nav a.btn:not(.btn-secondary):not(.btn-ghost):not(.btn-danger) { color: #10231a; }
+:root[data-theme="dark"] .nav a.btn:not(.btn-secondary):not(.btn-ghost):not(.btn-danger):hover { color: #10231a; }
+:root[data-theme="dark"] .btn-secondary { color: var(--brand-ink); background: var(--card); }
+:root[data-theme="dark"] .theme-switch button[aria-pressed="true"] { color: #10231a; }
 :root[data-theme="dark"] input,
 :root[data-theme="dark"] select,
 :root[data-theme="dark"] textarea { background: #171614; color: var(--ink); }
