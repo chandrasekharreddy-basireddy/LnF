@@ -42,6 +42,10 @@ and never passes a raw row through. Three rules hold the privacy boundary:
 | Daily job | `housekeeping()` — expiry, retention, nudges; returns photo paths for the Vercel job to delete |
 | Email | `sendOrQueue` tries Brevo; on refusal it writes `email_outbox` with a dedupe key, and the cron retries up to 3 times |
 | Headers | `src/proxy.ts` (Next 16's replacement for middleware) mints a nonce and sets a strict CSP on request and response |
+| Messaging | `post_claim_message()` scans for payment requests, phone numbers, emails and ID numbers; hits are quarantined and audited, never delivered |
+| Retention | `retention_policies` sets the window per category; `create_item` reads it, `housekeeping()` enforces it, `/legal/retention` renders the same rows |
+| Saved | `saved_items` / `saved_searches`; `run_saved_searches()` runs inside housekeeping and sends one notification per run |
+| Theme | a `lnf-theme` cookie read in the layout, so `data-theme` is on `<html>` before first paint |
 
 ## Matching
 

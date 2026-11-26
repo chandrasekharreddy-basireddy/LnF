@@ -66,6 +66,114 @@ p:last-child { margin-bottom: 0; }
 }
 .skip:focus { left: 0; color: #fff; }
 
+
+/* ---------- warm dark ----------
+   Applied by data-theme (a cookie, so the server can set it and there is no
+   flash), or by the system preference when the visitor has not chosen. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #141311;
+    --card: #1e1c19;
+    --ink: #f5f2eb;
+    --ink-soft: #cdc7bc;
+    --ink-mute: #a8a29a;
+    --line: #2f2c27;
+    --line-strong: #46413a;
+    --brand: #74c69d;
+    --brand-ink: #b7e4c7;
+    --brand-soft: #1f2a24;
+    --amber: #f0b429;
+    --amber-soft: #2e2617;
+    --danger: #ff8f85;
+    --danger-soft: #33201d;
+    --ok: #7bd8a4;
+    --ok-soft: #1b2a22;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 8px 24px -16px rgba(0, 0, 0, 0.8);
+  }
+}
+
+:root[data-theme="dark"] {
+  --paper: #141311;
+  --card: #1e1c19;
+  --ink: #f5f2eb;
+  --ink-soft: #cdc7bc;
+  --ink-mute: #a8a29a;
+  --line: #2f2c27;
+  --line-strong: #46413a;
+  --brand: #74c69d;
+  --brand-ink: #b7e4c7;
+  --brand-soft: #1f2a24;
+  --amber: #f0b429;
+  --amber-soft: #2e2617;
+  --danger: #ff8f85;
+  --danger-soft: #33201d;
+  --ok: #7bd8a4;
+  --ok-soft: #1b2a22;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 8px 24px -16px rgba(0, 0, 0, 0.8);
+}
+
+:root[data-theme="dark"] .btn { color: #10231a; }
+:root[data-theme="dark"] .nav a.btn { color: #10231a; }
+:root[data-theme="dark"] .nav a.btn:hover { color: #10231a; }
+:root[data-theme="dark"] input,
+:root[data-theme="dark"] select,
+:root[data-theme="dark"] textarea { background: #171614; color: var(--ink); }
+:root[data-theme="dark"] .panel-head { background: #1a1917; }
+:root[data-theme="dark"] .custody-label { background: #fff; color: #000; }
+
+/* ---------- theme switch ---------- */
+.theme-toggle {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 40px; min-width: 40px; padding: 0 10px; border-radius: var(--radius-sm);
+  border: 1px solid var(--line); background: transparent; color: var(--ink-soft);
+  font: inherit; font-size: 0.8rem; cursor: pointer;
+}
+.theme-toggle:hover { background: var(--brand-soft); color: var(--brand-ink); }
+
+/* ---------- command palette ---------- */
+.palette-layer {
+  position: fixed; inset: 0; z-index: 80;
+  display: grid; align-items: start; justify-items: center; padding: 12vh 16px 16px;
+}
+.palette-backdrop {
+  position: absolute; inset: 0; border: 0; cursor: default;
+  background: rgba(10, 15, 13, 0.55);
+}
+.palette {
+  position: relative;
+  width: min(560px, 100%); background: var(--card); border: 1px solid var(--line-strong);
+  border-radius: 14px; box-shadow: var(--shadow); overflow: hidden;
+}
+.palette input {
+  width: 100%; border: 0; border-bottom: 1px solid var(--line); border-radius: 0;
+  padding: 16px; font-size: 1rem; background: transparent; color: var(--ink);
+}
+.palette ul { list-style: none; margin: 0; padding: 8px; max-height: 46vh; overflow-y: auto; }
+.palette li a, .palette li button {
+  display: flex; width: 100%; gap: 10px; align-items: center; text-align: left;
+  padding: 10px 12px; border-radius: 8px; text-decoration: none; color: var(--ink);
+  background: none; border: 0; font: inherit; cursor: pointer;
+}
+.palette li a:hover, .palette li button:hover, .palette li a:focus-visible { background: var(--brand-soft); }
+.palette .kbd { margin-left: auto; font-family: var(--mono); font-size: 0.72rem; color: var(--ink-mute); }
+.palette-foot { padding: 10px 14px; border-top: 1px solid var(--line); font-size: 0.75rem; color: var(--ink-mute); }
+
+/* ---------- gallery ---------- */
+.gallery-thumbs { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.gallery-thumbs button { padding: 0; border: 0; background: none; cursor: zoom-in; border-radius: 10px; }
+.gallery-thumbs img { border-radius: 10px; border: 1px solid var(--line); width: 100%; height: auto; }
+.lightbox {
+  position: fixed; inset: 0; z-index: 90; background: rgba(8, 12, 11, 0.94);
+  display: grid; grid-template-rows: auto 1fr auto; padding: 12px;
+}
+.lightbox img { max-width: 100%; max-height: 100%; margin: auto; object-fit: contain; border-radius: 8px; }
+.lightbox-bar { display: flex; justify-content: space-between; align-items: center; color: #f5f2eb; gap: 12px; }
+.lightbox button {
+  min-height: 44px; min-width: 44px; border-radius: 10px; border: 1px solid #4b4a45;
+  background: rgba(255, 255, 255, 0.08); color: #f5f2eb; font: inherit; cursor: pointer;
+}
+.lightbox figcaption { color: #cdc7bc; font-size: 0.85rem; text-align: center; padding-top: 8px; }
+
 /* ---------- shell ---------- */
 .wrap { width: 100%; max-width: var(--max); margin: 0 auto; padding: 0 20px; }
 

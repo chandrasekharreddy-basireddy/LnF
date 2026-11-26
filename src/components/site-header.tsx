@@ -2,6 +2,8 @@ import Link from 'next/link';
 import type { SessionUser } from '@/lib/types';
 import { env } from '@/lib/env';
 import { isStaff } from '@/lib/data';
+import { ThemeToggle } from './theme-toggle';
+import { CommandPalette } from './command-palette';
 
 export function SiteHeader({ user }: { user: SessionUser | null }) {
   return (
@@ -31,6 +33,8 @@ export function SiteHeader({ user }: { user: SessionUser | null }) {
               Sign in
             </Link>
           )}
+          <CommandPalette staff={isStaff(user)} />
+          <ThemeToggle initial="system" />
         </nav>
       </div>
     </header>

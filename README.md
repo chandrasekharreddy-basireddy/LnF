@@ -33,9 +33,11 @@ Next.js 16 (App Router) · TypeScript · Postgres/RLS · Supabase Storage · Bre
 | `/browse` | Filterable list; every filter lives in the URL |
 | `/items/[ref]` | One item, its verification question, claim entry, report-a-listing |
 | `/report/found`, `/report/lost` | Intake forms with photo privacy, consent notice, full error states |
-| `/claims`, `/claims/[ref]` | Claim list and one-time handover code |
+| `/claims`, `/claims/[ref]` | Claim list, one-time handover code, and a masked message thread |
 | `/account` | Profile, alerts opt-in, your listings, erasure request |
 | `/staff`, `/staff/items/[ref]` | Desk queue, claim review, handover confirmation, listing controls |
+| `/staff/scan`, `/staff/disposal`, `/staff/items/[ref]/label` | Counter scanner, disposal queue, printable 2×3in custody label |
+| `/account/saved` | Saved items and saved searches |
 | `/admin`, `/admin/users`, `/admin/audit` | Recovery metrics, roles, audit log, sample purge |
 | `/legal/privacy`, `/legal/retention`, `/legal/terms`, `/safety`, `/how-it-works` | The written promises, generated from the same constants the code uses |
 | `/api/health`, `/api/cron/housekeeping` | Liveness, and the daily job |

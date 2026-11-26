@@ -5,7 +5,7 @@ import { currentUser, getItem, isItemSaved } from '@/lib/data';
 import { categoryLabel } from '@/lib/copy';
 import { formatDate, formatDateTime } from '@/lib/validation';
 import { env } from '@/lib/env';
-import { PhotoStrip } from '@/components/photo-strip';
+import { PhotoGallery } from '@/components/photo-gallery';
 import { SafetyNote } from '@/components/safety-note';
 import { StatusChip } from '@/components/status-chip';
 import { ClaimForm } from '@/components/claim-form';
@@ -100,7 +100,7 @@ export default async function ItemPage({ params, searchParams }: Props) {
             </div>
           ) : photos.length ? (
             <div style={{ marginBottom: 24 }}>
-              <PhotoStrip photos={photos} />
+              <PhotoGallery photos={photos} />
             </div>
           ) : (
             <div

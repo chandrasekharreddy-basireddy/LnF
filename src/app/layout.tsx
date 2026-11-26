@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import { cookies } from 'next/headers';
 import { SiteFooter, SiteHeader } from '@/components/site-header';
 import { currentUser } from '@/lib/data';
 import { env } from '@/lib/env';
@@ -37,9 +38,11 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const user = await currentUser();
+  const stored = (await cookies()).get('lnf-theme')?.value;
+  const theme = stored === 'light' || stored === 'dark' ? stored : null;
 
   return (
-    <html lang="en-IN">
+    <html lang="en-IN" data-theme={theme ?? undefined}>
       <body>
         <a className="skip" href="#main">
           Skip to content
