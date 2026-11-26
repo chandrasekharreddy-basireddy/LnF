@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { supabaseServer } from '@/lib/supabase-server';
+import { safeInternalPath } from '@/lib/validation';
 
 /**
  * Magic-link landing. The 6-digit code path does not need this route, but the
@@ -26,6 +27,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL('/sign-in?error=unavailable', request.url));
   }
 
-  const safeNext = next.startsWith('/') ? next : '/account';
+  const safeNext = safeInternalPath(next);
   return NextResponse.redirect(new URL(safeNext, request.url));
 }

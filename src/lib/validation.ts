@@ -28,6 +28,18 @@ export function isValidDate(value: string): boolean {
   return !Number.isNaN(d.getTime());
 }
 
+/**
+ * Only a same-origin path is a valid post-sign-in destination.
+ * Rejects absolute URLs, protocol-relative "//host", and the "\\" forms some
+ * browsers normalise to "/".
+ */
+export function safeInternalPath(next: string | null | undefined, fallback = '/account'): string {
+  if (!next) return fallback;
+  if (!next.startsWith('/')) return fallback;
+  if (next.startsWith('//') || next.startsWith('/\\')) return fallback;
+  return next;
+}
+
 export function refLooksValid(ref: string): boolean {
   return /^LF-\d{4}-\d{4}$/i.test(ref);
 }

@@ -46,7 +46,7 @@ export async function processAndUploadPhotos(
 
     try {
       const input = Buffer.from(await file.arrayBuffer());
-      const output = await sharp(input, { failOn: 'error' })
+      const output = await sharp(input, { failOn: 'error', limitInputPixels: 16_777_216 })
         .rotate()
         .resize({ width: 1600, height: 1600, fit: 'inside', withoutEnlargement: true })
         .webp({ quality: 78 })

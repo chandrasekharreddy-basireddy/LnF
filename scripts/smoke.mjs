@@ -118,6 +118,17 @@ try {
   const claims = await (await fetch(BASE + '/claims')).text();
   log('CHECK /claims asks for sign in:', /Sign in to see the claims/.test(claims));
 
+  for (const evil of ['//evil.com', 'https://evil.com', '/\\evil.com']) {
+    const res = await fetch(
+      `${BASE}/auth/confirm?token_hash=abc&type=email&next=${encodeURIComponent(evil)}`,
+      { redirect: 'manual' },
+    );
+    const location = res.headers.get('location') ?? '';
+    log(`CHECK open redirect blocked (${evil}) ->`, res.status, location.replace(BASE, ''));
+  }
+  const okNext = await fetch(`${BASE}/auth/confirm?token_hash=abc&type=email&next=%2Fclaims`, { redirect: 'manual' });
+  log('CHECK safe next still honoured ->', okNext.status, (okNext.headers.get('location') ?? '').replace(BASE, ''));
+
   const cron = await fetch(BASE + '/api/cron/housekeeping');
   log('CHECK cron without bearer ->', cron.status);
 

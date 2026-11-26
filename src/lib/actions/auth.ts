@@ -3,7 +3,7 @@
 import { redirect } from 'next/navigation';
 import { supabaseServer } from '@/lib/supabase-server';
 import { env } from '@/lib/env';
-import { isEmail, str } from '@/lib/validation';
+import { isEmail, safeInternalPath, str } from '@/lib/validation';
 
 export type AuthState = { step: 'email' | 'otp'; email?: string; error?: string; notice?: string };
 
@@ -30,8 +30,7 @@ export async function requestOtp(_prev: AuthState, formData: FormData): Promise<
 export async function verifyOtp(_prev: AuthState, formData: FormData): Promise<AuthState> {
   const email = str(formData.get('email')).toLowerCase();
   const token = str(formData.get('token')).replace(/\s+/g, '');
-  const rawNext = str(formData.get('next'));
-  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/account';
+  const next = safeInternalPath(str(formData.get('next')));
   if (!/^\d{6}$/.test(token)) {
     return { step: 'otp', email, error: 'Enter the 6-digit code from the email.' };
   }

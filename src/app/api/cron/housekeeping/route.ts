@@ -1,9 +1,22 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { timingSafeEqual as equal } from 'node:crypto';
 import { env } from '@/lib/env';
 import { supabaseAdmin } from '@/lib/supabase-server';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
+
+/** Compares two strings without leaking their length or prefix through timing. */
+function timingSafeEqual(a: string, b: string): boolean {
+  const left = Buffer.from(a);
+  const right = Buffer.from(b);
+  if (left.length !== right.length) {
+    // still compare something of equal length so the branch is not the only signal
+    equal(left, left);
+    return false;
+  }
+  return equal(left, right);
+}
 
 type Summary = {
   expired?: number;
@@ -23,7 +36,7 @@ export async function GET(request: NextRequest) {
   const auth = request.headers.get('authorization') ?? '';
   const expected = env.cronSecret ? `Bearer ${env.cronSecret}` : '';
 
-  if (!expected || auth !== expected) {
+  if (!expected || !timingSafeEqual(auth, expected)) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 

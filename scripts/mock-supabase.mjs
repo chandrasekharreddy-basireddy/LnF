@@ -189,7 +189,7 @@ export function startMock(port = 54321) {
     if (path === '/auth/v1/user') {
       return send(res, 401, { message: 'no session' });
     }
-    if (path.startsWith('/auth/v1/token') || path.startsWith('/auth/v1/otp')) {
+    if (path === '/auth/v1/verify' || path.startsWith('/auth/v1/token') || path.startsWith('/auth/v1/otp')) {
       return send(res, 200, { access_token: 'mock', token_type: 'bearer', user: { id: 'mock-user' } });
     }
     if (path === '/rest/v1/rpc/search_items') {

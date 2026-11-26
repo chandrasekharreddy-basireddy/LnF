@@ -41,6 +41,7 @@ export const ERRORS: Record<string, string> = {
   ALREADY_DECIDED: 'That claim was already decided.',
   NO_APPROVED_CLAIM: 'Approve a claim before confirming a handover.',
   CODE_MISMATCH: 'That code does not match. Ask the owner to show the code on their claim page.',
+  LOCKED: 'Too many wrong codes. This handover is locked for 15 minutes — ask a supervisor if the owner is waiting.',
   CODE_USED: 'That code was already used. Check the item is still with you before releasing it.',
   ALREADY_RECOVERED: 'This item is already recorded as returned.',
   BAD_STATUS: 'That status is not allowed here.',
