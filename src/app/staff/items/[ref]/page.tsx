@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { currentUser, isStaff, staffItem } from '@/lib/data';
 import { ClaimDecision, HandoverForm, ItemStatusForm } from '@/components/staff-actions';
+import { MessageForm } from '@/components/message-form';
 import { StatusChip } from '@/components/status-chip';
 import { formatDateTime } from '@/lib/validation';
 import { categoryLabel } from '@/lib/copy';
@@ -72,6 +73,16 @@ export default async function StaffItemPage({ params }: { params: Promise<{ ref:
                     <div style={{ marginTop: 12 }}>
                       <ClaimDecision claimRef={c.ref} itemRef={item.ref} status={c.status} />
                     </div>
+                    {['submitted', 'under_review', 'approved'].includes(c.status) ? (
+                      <details style={{ marginTop: 12 }}>
+                        <summary className="small" style={{ cursor: 'pointer' }}>
+                          Reply to this thread
+                        </summary>
+                        <div style={{ marginTop: 10 }}>
+                          <MessageForm claimRef={c.ref} backTo={`/staff/items/${item.ref}`} />
+                        </div>
+                      </details>
+                    ) : null}
                   </div>
                 ))
               ) : (

@@ -49,6 +49,10 @@ export const ERRORS: Record<string, string> = {
   NO_SUCH_USER: 'No account with that email. They must sign in once before you can give them a role.',
   CANNOT_DEMOTE_SELF: 'You cannot remove your own admin role.',
   BAD_DECISION: 'Choose approve, reject or move to review.',
+  THREAD_CLOSED: 'This thread is read-only now. If something is still wrong, report the listing.',
+  EMPTY: 'Write something first.',
+  TOO_LONG: 'Keep it under 2000 characters.',
+  BLOCKED: 'That message was held back.',
 };
 
 export function errorText(code: string | undefined): string {

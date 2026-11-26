@@ -1,12 +1,13 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
-import { currentUser, myClaim } from '@/lib/data';
+import { claimThread, currentUser, myClaim } from '@/lib/data';
 import { Timeline } from '@/components/timeline';
 import { StatusChip } from '@/components/status-chip';
 import { CopyCode } from '@/components/copy-code';
 import { Banner } from '@/components/banner';
 import { SafetyNote } from '@/components/safety-note';
+import { ClaimThreadPanel } from '@/components/claim-thread';
 import { formatDate, formatDateTime } from '@/lib/validation';
 import { env } from '@/lib/env';
 
@@ -27,6 +28,7 @@ export default async function ClaimPage({
 
   const detail = await myClaim(ref);
   if (!detail) notFound();
+  const thread = await claimThread(ref);
 
   const { claim, item, timeline, handover } = detail;
   const isNew = sp.new === '1';
@@ -115,6 +117,10 @@ export default async function ClaimPage({
 
           <SafetyNote compact />
         </aside>
+      </div>
+
+      <div style={{ marginTop: 28 }}>
+        <ClaimThreadPanel thread={thread} claimRef={claim.ref} />
       </div>
     </div>
   );

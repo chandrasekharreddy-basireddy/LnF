@@ -1,6 +1,6 @@
 import { supabaseServer } from './supabase-server';
 import type {
-  BoardStats, ClaimDetail, ClaimSummary, Photo, PublicItem, SearchResult, SessionUser, SignedPhoto,
+  BoardStats, ClaimDetail, ClaimSummary, ClaimThread, Photo, PublicItem, SearchResult, SessionUser, SignedPhoto,
 } from './types';
 
 export type SearchParams = {
@@ -190,6 +190,16 @@ export async function myItems() {
     }[];
   } catch {
     return [];
+  }
+}
+
+export async function claimThread(ref: string): Promise<ClaimThread | null> {
+  try {
+    const supabase = await supabaseServer();
+    const { data } = await supabase.rpc('claim_thread', { p_claim_ref: ref });
+    return (data as ClaimThread | null) ?? null;
+  } catch {
+    return null;
   }
 }
 

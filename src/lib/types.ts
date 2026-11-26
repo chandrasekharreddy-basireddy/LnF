@@ -83,3 +83,20 @@ export type ClaimDetail = {
 };
 
 export type ActionResult = { ok: boolean; error?: string; message?: string; ref?: string };
+
+export type ClaimMessage = {
+  id: string;
+  body: string;
+  role: 'claimant' | 'finder' | 'staff';
+  mine: boolean;
+  quarantined: boolean;
+  flaggedReason: string | null;
+  at: string;
+};
+
+export type ClaimThread = {
+  role: 'claimant' | 'finder' | 'staff';
+  locked: boolean;
+  lockReason: string | null;
+  messages: ClaimMessage[];
+};
