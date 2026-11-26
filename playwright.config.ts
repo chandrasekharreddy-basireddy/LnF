@@ -26,7 +26,8 @@ export default defineConfig({
   },
   projects: [
     { name: 'mobile', use: { ...devices['Pixel 5'], viewport: { width: 360, height: 800 } } },
-    { name: 'tablet', use: { ...devices['iPad Mini'], viewport: { width: 768, height: 1024 } } },
+    // iPad Mini's descriptor defaults to WebKit; CI installs Chromium only.
+    { name: 'tablet', use: { ...devices['Desktop Chrome'], viewport: { width: 768, height: 1024 }, hasTouch: true } },
     { name: 'desktop', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } },
   ],
   webServer: [
