@@ -7,6 +7,8 @@ import { Pagination } from '@/components/pagination';
 import { EmptyState } from '@/components/empty-state';
 import { CategoryIcon } from '@/components/category-icon';
 import { EMPTY } from '@/lib/copy';
+import { SaveSearchForm } from '@/components/save-controls';
+import { currentUser } from '@/lib/data';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,9 +36,10 @@ export default async function BrowsePage({ searchParams }: { searchParams: Param
   const sort = one(sp.sort);
   const page = Math.max(Number(one(sp.page) ?? 1) || 1, 1);
 
-  const [result, zoneList] = await Promise.all([
+  const [result, zoneList, user] = await Promise.all([
     searchItems({ q, type, category, zone, from, to, status, sort, page, limit: 18 }),
     zones(),
+    currentUser(),
   ]);
 
   const hasFilters = Boolean(q || type || category || zone || from || to || status);
@@ -58,6 +61,12 @@ export default async function BrowsePage({ searchParams }: { searchParams: Param
       </div>
 
       <FilterBar params={{ q, type, category, zone, from, to, status, sort }} zones={zoneList} />
+
+      {user && hasFilters ? (
+        <div className="card" style={{ marginTop: 16 }}>
+          <SaveSearchForm q={q} type={type} category={category} zone={zone} />
+        </div>
+      ) : null}
 
       <div style={{ marginTop: 24 }}>
         {result.items.length ? (

@@ -195,6 +195,12 @@ export function startMock(port = 54321) {
     if (path === '/rest/v1/rpc/search_items') {
       return send(res, 200, search(json.p ?? {}));
     }
+    if (path === '/rest/v1/rpc/my_saved_items' || path === '/rest/v1/rpc/my_saved_searches') {
+      return send(res, 200, []);
+    }
+    if (path === '/rest/v1/rpc/is_item_saved') {
+      return send(res, 200, false);
+    }
     if (path === '/rest/v1/rpc/claim_thread') {
       return send(res, 200, null);
     }

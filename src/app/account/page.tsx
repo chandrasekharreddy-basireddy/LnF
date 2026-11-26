@@ -109,6 +109,9 @@ export default async function AccountPage() {
               <Link className="btn btn-secondary btn-block" href="/claims">
                 My claims
               </Link>
+              <Link className="btn btn-secondary btn-block" href="/account/saved">
+                Saved items and searches
+              </Link>
             </div>
           </div>
 

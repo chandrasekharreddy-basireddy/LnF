@@ -203,6 +203,40 @@ export async function claimThread(ref: string): Promise<ClaimThread | null> {
   }
 }
 
+export async function mySavedItems(): Promise<PublicItem[]> {
+  try {
+    const supabase = await supabaseServer();
+    const { data } = await supabase.rpc('my_saved_items');
+    return (data ?? []) as PublicItem[];
+  } catch {
+    return [];
+  }
+}
+
+export async function mySavedSearches() {
+  try {
+    const supabase = await supabaseServer();
+    const { data } = await supabase.rpc('my_saved_searches');
+    return (data ?? []) as {
+      id: string; label: string; query: string | null; type: string | null;
+      category: string | null; zone: string | null; active: boolean;
+      lastNotifiedAt: string | null; createdAt: string;
+    }[];
+  } catch {
+    return [];
+  }
+}
+
+export async function isItemSaved(ref: string): Promise<boolean> {
+  try {
+    const supabase = await supabaseServer();
+    const { data } = await supabase.rpc('is_item_saved', { p_ref: ref });
+    return Boolean(data);
+  } catch {
+    return false;
+  }
+}
+
 export async function staffQueue() {
   try {
     const supabase = await supabaseServer();

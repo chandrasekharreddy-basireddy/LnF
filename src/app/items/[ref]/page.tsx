@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { currentUser, getItem } from '@/lib/data';
+import { currentUser, getItem, isItemSaved } from '@/lib/data';
 import { categoryLabel } from '@/lib/copy';
 import { formatDate, formatDateTime } from '@/lib/validation';
 import { env } from '@/lib/env';
@@ -12,6 +12,7 @@ import { ClaimForm } from '@/components/claim-form';
 import { ListingReport } from '@/components/listing-report';
 import { Banner } from '@/components/banner';
 import { CategoryIcon } from '@/components/category-icon';
+import { SaveItemButton } from '@/components/save-controls';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,6 +40,7 @@ export default async function ItemPage({ params, searchParams }: Props) {
 
   const { item, photos } = data;
   const user = await currentUser();
+  const saved = user ? await isItemSaved(item.ref) : false;
   const posted = sp.posted === '1';
 
   if (item.status === 'quarantined') {
@@ -203,6 +205,14 @@ export default async function ItemPage({ params, searchParams }: Props) {
               </div>
             </div>
           )}
+
+          {user ? (
+            <div className="panel">
+              <div className="panel-body">
+                <SaveItemButton itemRef={item.ref} saved={saved} />
+              </div>
+            </div>
+          ) : null}
 
           <SafetyNote />
         </aside>
