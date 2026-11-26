@@ -6,9 +6,10 @@ test.describe('public board', () => {
   test('home explains the product and offers both actions', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Lost something');
-    await expect(page.getByRole('link', { name: 'I lost something' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'I found something' })).toBeVisible();
-    await expect(page.getByText('Never pay to get an item back.')).toBeVisible();
+    const main = page.getByRole('main');
+    await expect(main.getByRole('link', { name: 'I lost something' })).toBeVisible();
+    await expect(main.getByRole('link', { name: 'I found something' })).toBeVisible();
+    await expect(main.getByText('Never pay to get an item back.').first()).toBeVisible();
     await expect(page.getByRole('link', { name: /Black wireless earbuds/ })).toBeVisible();
   });
 

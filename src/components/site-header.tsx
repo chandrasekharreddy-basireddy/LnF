@@ -27,7 +27,7 @@ export function SiteHeader({ user }: { user: SessionUser | null }) {
           {user ? (
             <Link href="/account">Account</Link>
           ) : (
-            <Link href="/sign-in" className="btn btn-sm" style={{ color: '#fff' }}>
+            <Link href="/sign-in" className="btn btn-sm">
               Sign in
             </Link>
           )}

@@ -98,6 +98,10 @@ p:last-child { margin-bottom: 0; }
 }
 .nav a:hover, .nav button:hover { background: var(--brand-soft); color: var(--brand-ink); }
 .nav a[aria-current="page"] { color: var(--brand-ink); background: var(--brand-soft); }
+/* a .btn inside the nav must keep its own surface: .nav a would otherwise
+   reset the background and leave white text on the page colour */
+.nav a.btn { background: var(--brand); color: #fff; }
+.nav a.btn:hover { background: var(--brand-ink); color: #fff; }
 
 .site-footer {
   border-top: 1px solid var(--line); margin-top: 64px; padding: 32px 0 40px;
