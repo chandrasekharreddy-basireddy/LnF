@@ -25,10 +25,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { ref } = await params;
   const data = await getItem(ref);
   if (!data) return { title: 'Listing not found' };
+  // A quarantined listing is an identity document: no title, no description,
+  // no indexing, even in the page head.
+  if (data.item.status !== 'available') {
+    return { title: 'Listing', robots: { index: false, follow: false } };
+  }
   return {
     title: data.item.title,
     description: data.item.description.slice(0, 155),
-    robots: { index: data.item.status === 'available', follow: true },
+    robots: { index: true, follow: true },
   };
 }
 

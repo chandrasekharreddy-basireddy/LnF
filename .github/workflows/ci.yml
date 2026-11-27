@@ -22,18 +22,25 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          # the mock, not a secret: a build must not depend on the live project
+          NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-anon-key
           NEXT_PUBLIC_SITE_URL: https://lnf.example.com
           NEXT_PUBLIC_CAMPUS_NAME: Campus
           NEXT_PUBLIC_DESK_LABEL: Main Gate & Security Desk
           NEXT_PUBLIC_SUPPORT_EMAIL: help@example.com
-      - name: Guardrail — no private field names in the public bundle
+      - name: Smoke — render every route against the mock
+        run: node scripts/smoke.mjs
+      - name: Guardrail — private fields must not reach the client bundle
         run: |
-          if grep -rIl --include='*.js' -E 'answer_hash|verification_answer|bin_code|finder_contact' .next/static; then
-            echo "Private field name found in client bundle"; exit 1
+          # snake_case names appear in rendered HTML, camelCase in the JS bundle;
+          # check both, and fail loudly if the scan finds nothing to scan.
+          files=$(find .next/static .next/server/app -name '*.js' 2>/dev/null | head -400)
+          if [ -z "$files" ]; then echo "guardrail: nothing to scan"; exit 1; fi
+          if grep -lE 'answer_hash|answerHash|bin_code|binCode|finder_contact|finderContact|verification_answer' $files; then
+            echo "guardrail: a private field name reached the client"; exit 1
           fi
-          echo "clean"
+          echo "guardrail: clean ($(echo "$files" | wc -l) bundles scanned)"
 
   e2e:
     runs-on: ubuntu-latest

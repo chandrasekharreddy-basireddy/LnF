@@ -88,15 +88,14 @@ export function ScanConsole() {
 
   return (
     <div className="stack">
-      {status === 'scanning' ? (
-        <video
-          ref={videoRef}
-          muted
-          playsInline
-          aria-label="Camera preview"
-          style={{ width: '100%', borderRadius: 10, background: '#000' }}
-        />
-      ) : null}
+      <video
+        ref={videoRef}
+        muted
+        playsInline
+        aria-label="Camera preview"
+        hidden={status !== 'scanning'}
+        style={{ width: '100%', borderRadius: 10, background: '#000' }}
+      />
 
       {status === 'unsupported' ? (
         <p className="small muted">

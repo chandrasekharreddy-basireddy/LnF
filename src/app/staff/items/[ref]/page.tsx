@@ -101,7 +101,15 @@ export default async function StaffItemPage({ params }: { params: Promise<{ ref:
               <strong>Confirm a handover</strong>
             </div>
             <div className="panel-body">
-              <HandoverForm itemRef={item.ref} />
+              {item.status === 'recovered' ? (
+                <p className="small muted">This item is already recorded as returned.</p>
+              ) : claims.some((c) => c.status === 'approved') ? (
+                <HandoverForm itemRef={item.ref} />
+              ) : (
+                <p className="small muted">
+                  Approve a claim first. An item is only released against an approved claim.
+                </p>
+              )}
             </div>
           </section>
 

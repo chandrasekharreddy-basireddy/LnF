@@ -16,9 +16,9 @@ Region chosen: **ap-south-1 (Mumbai)** — lowest latency for users in India.
 
 ## 1. Database (already done for this project)
 
-Project ref: `<your-project-ref>` (Project Settings → General). The schema is applied in eight
-migrations; this repository is deployed against a live project in `ap-south-1`, and the
-values below are the ones that project uses — swap in yours.
+Project ref: `<your-project-ref>` (Project Settings → General). The schema is applied in
+fourteen migrations; this repository is deployed against a live project in `ap-south-1`, and
+the values below are the ones that project uses — swap in yours.
 
 | File | Contents |
 | --- | --- |
@@ -30,6 +30,12 @@ values below are the ones that project uses — swap in yours.
 | `0006_search_cover.sql` | browse results carry a cover path (one signed-URL call per page) |
 | `0007_stats_truth.sql` | open counts describe the board; recovered counts only count real handovers |
 | `0008_role_bootstrap.sql` | `bootstrap_role()` for the first admin |
+| `0009_security_hardening.sql` | claim-approval lock, handover lockout, column-scoped profile writes, anon RPC revocations |
+| `0010_email_outbox.sql` | outbox table plus queue/claim/finish functions |
+| `0011_claim_messages.sql` | masked thread, the extortion/PII scanner, thread read model |
+| `0012_saved_items_and_searches.sql` | saved items, saved searches, the nightly match job |
+| `0013_retention_and_disposal.sql` | per-category retention, disposal queue, auditable dispositions |
+| `0014_audit_fixes.sql` | quarantine stub, anon revocations, message RLS, handover locking, retention guard, the pg_cron schedule |
 
 To rebuild from scratch on a new project, paste each file into the SQL editor in order, or:
 
@@ -99,7 +105,7 @@ Two independent schedules; keep both.
 
 | Job | Where | What it covers |
 | --- | --- | --- |
-| `pg_cron` `lnf-housekeeping` at 02:15 UTC | Supabase | expiry, retention deletes, nudges — works with no secrets |
+| `pg_cron` `lnf-housekeeping` at 02:15 UTC | Supabase, scheduled by migration `0014` | expiry, retention deletes, nudges — works with no secrets |
 | `/api/cron/housekeeping` at 02:00 UTC | Vercel (`vercel.json`) | same job, **plus** photo deletion and **email retries** from `email_outbox` |
 
 The Vercel run also drains `email_outbox`: any send that Brevo refused during the day is

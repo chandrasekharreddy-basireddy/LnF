@@ -95,9 +95,35 @@ export async function getItem(ref: string): Promise<{ item: PublicItem; photos: 
     const supabase = await supabaseServer();
     const { data, error } = await supabase.rpc('get_public_item', { p_ref: ref });
     if (error || !data) return null;
-    const payload = data as { item: PublicItem; photos: Photo[] };
+    const payload = data as { item: Partial<PublicItem> & { ref: string; status: PublicItem['status'] }; photos: Photo[] };
+
+    // get_public_item returns a stub for a quarantined listing: reference and
+    // status only. Fill the rest with empty values so the page can render its
+    // neutral "held at the desk" state without a private field anywhere.
+    if (payload.item.status === 'quarantined') {
+      const stub: PublicItem = {
+        id: payload.item.id ?? '',
+        ref: payload.item.ref,
+        type: payload.item.type ?? 'found',
+        status: 'quarantined',
+        category: 'documents',
+        title: '',
+        description: '',
+        zoneLabel: null,
+        zoneCode: null,
+        spot: null,
+        eventDate: '',
+        custodyLabel: null,
+        verificationQuestion: null,
+        sensitiveHiddenPhoto: true,
+        isSample: false,
+        createdAt: '',
+      };
+      return { item: stub, photos: [] };
+    }
+
     const photos = payload.item.sensitiveHiddenPhoto ? [] : await signPhotos(payload.photos ?? []);
-    return { item: payload.item, photos };
+    return { item: payload.item as PublicItem, photos };
   } catch {
     return null;
   }
@@ -132,7 +158,11 @@ export async function currentUser(): Promise<SessionUser | null> {
     if (!auth?.user) return null;
     const [{ data: roles }, { data: profile }] = await Promise.all([
       supabase.from('user_roles').select('role').eq('user_id', auth.user.id),
-      supabase.from('profiles').select('full_name,email,alerts_opt_in').eq('id', auth.user.id).maybeSingle(),
+      supabase
+        .from('profiles')
+        .select('full_name,email,phone,alerts_opt_in,marketing_opt_in')
+        .eq('id', auth.user.id)
+        .maybeSingle(),
     ]);
     return {
       id: auth.user.id,
@@ -140,6 +170,8 @@ export async function currentUser(): Promise<SessionUser | null> {
       name: profile?.full_name ?? null,
       roles: (roles ?? []).map((r: { role: string }) => r.role),
       alertsOptIn: Boolean(profile?.alerts_opt_in),
+      phone: (profile?.phone as string | null) ?? null,
+      marketingOptIn: Boolean(profile?.marketing_opt_in),
     };
   } catch {
     return null;

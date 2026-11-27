@@ -51,6 +51,8 @@ export type SessionUser = {
   name: string | null;
   roles: string[];
   alertsOptIn: boolean;
+  phone?: string | null;
+  marketingOptIn?: boolean;
 };
 
 export type ClaimSummary = {

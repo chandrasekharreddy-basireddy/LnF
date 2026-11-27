@@ -174,6 +174,7 @@ export async function closeReport(_prev: StaffState, formData: FormData): Promis
     const result = data as { ok: boolean; error?: string };
     if (!result?.ok) return { ok: false, error: errorText(result?.error) };
     revalidatePath('/admin');
+    revalidatePath('/staff');
     return { ok: true, message: 'Report closed.' };
   } catch {
     return { ok: false, error: 'Could not reach the desk.' };

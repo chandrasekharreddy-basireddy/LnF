@@ -63,10 +63,13 @@ export function HandoverForm({ itemRef }: { itemRef: string }) {
           maxLength={6}
           style={{ fontFamily: 'var(--mono)', letterSpacing: '0.3em', textTransform: 'uppercase' }}
         />
-        <p className="hint">Six characters. If the owner cannot show it, leave it blank and write why below.</p>
+        <p className="hint">
+          Six characters. If the owner cannot show it, leave it blank and write why below — the desk refuses a
+          handover with neither a code nor a note.
+        </p>
       </div>
       <div className="field">
-        <label htmlFor="note">Note (optional)</label>
+        <label htmlFor="note">Note (required when there is no code)</label>
         <input id="note" name="note" type="text" maxLength={300} placeholder="Owner collected in person, ID checked." />
       </div>
       <SubmitButton pendingLabel="Recording…">Confirm handover</SubmitButton>
@@ -83,7 +86,7 @@ export function ItemStatusForm({ itemRef, status }: { itemRef: string; status: s
       {state.message ? <Banner tone="ok">{state.message}</Banner> : null}
       <div className="field">
         <label htmlFor="status">Change listing status</label>
-        <select id="status" name="status" defaultValue="available">
+        <select id="status" name="status" defaultValue={status}>
           <option value="available">Publish on the board</option>
           <option value="pending_moderation">Hold for review</option>
           <option value="quarantined">Keep at the desk only</option>

@@ -95,9 +95,9 @@ export default async function AccountPage() {
             <div className="panel-body">
               <AccountForm
                 name={user.name ?? ''}
-                phone=""
+                phone={user.phone ?? ''}
                 alerts={user.alertsOptIn}
-                marketing={false}
+                marketing={user.marketingOptIn ?? false}
               />
             </div>
           </section>

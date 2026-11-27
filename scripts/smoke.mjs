@@ -40,8 +40,11 @@ const routes = [
 ];
 
 const out = [];
+let failures = 0;
 const log = (...a) => {
-  out.push(a.join(' '));
+  const line = a.join(' ');
+  if (line.includes('CHECK') && line.includes('false')) failures += 1;
+  out.push(line);
   try {
     writeFileSync('/tmp/smoke.txt', out.join('\n') + '\n');
   } catch {}
@@ -196,17 +199,21 @@ try {
 
   log('');
   log('DONE');
+  log(failures === 0 ? 'RESULT: all checks passed' : `RESULT: ${failures} CHECK(S) FAILED`);
   log('SERVER ERRORS:', (serverLog.match(/(Error|error)[^\n]{0,160}/g) ?? []).slice(0, 6).join(' || ') || 'none');
 
   mkdirSync('/scratch/work/shots', { recursive: true });
 } catch (err) {
+  failures += 1;
   log('SMOKE FAILED ' + String(err));
   log(serverLog.slice(-3000));
 } finally {
   writeFileSync('/tmp/smoke.txt', out.join('\n') + '\n');
+  // print, so CI and a human both see it — and fail, so it is a gate
+  process.stdout.write(out.join('\n') + '\n');
   child.kill('SIGTERM');
   await sleep(600);
   child.kill('SIGKILL');
   mock.close();
-  process.exit(0);
+  process.exit(failures === 0 ? 0 : 1);
 }

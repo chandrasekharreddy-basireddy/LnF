@@ -8,7 +8,7 @@ file is the engineering version: what is stored, where, and what deletes it.
 | Data | Table / bucket | Public? | Retention |
 | --- | --- | --- | --- |
 | Email, name, phone | `profiles` | no | life of account |
-| Listing text, zone, date | `items` | yes, via `public_items` | 90 days, then +30 to delete |
+| Listing text, zone, date | `items` | yes, via `public_items` | per category (30/60/90 days), then +30 to delete |
 | Photos (re-encoded, no EXIF) | `storage: item-photos` | signed URL only, 1 h | deleted with the listing |
 | Verification answer | `item_private.answer_hash` | never | deleted with the listing |
 | Serial, bin, finder contact | `item_private` | staff only | deleted with the listing |
@@ -53,9 +53,11 @@ delete from abuse_reports  where status = 'closed' and created_at < now() - inte
 delete from rate_limits    where window_start < now() - interval '2 days';
 ```
 
-`lib/retention.ts` holds the same numbers as constants; `/legal/retention` renders them and
-`/legal/privacy` interpolates them, so the published page cannot drift from the job. If you
-change one, change both — the file has a comment saying so.
+Category windows live in the `retention_policies` table (seeded by migration `0013`) and are
+read by `create_item()` when it sets `expires_at`. `/legal/retention` renders that table
+directly, so the published window cannot drift from the one the job enforces. `lib/retention.ts`
+keeps the record-level windows (notifications, audit, outbox) as constants; `/legal/privacy`
+interpolates them.
 
 ## Data subject requests
 

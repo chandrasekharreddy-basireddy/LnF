@@ -35,9 +35,15 @@ export function isValidDate(value: string): boolean {
  */
 export function safeInternalPath(next: string | null | undefined, fallback = '/account'): string {
   if (!next) return fallback;
-  if (!next.startsWith('/')) return fallback;
-  if (next.startsWith('//') || next.startsWith('/\\')) return fallback;
-  return next;
+  // The URL parser deletes TAB/LF/CR before resolving, so "/<TAB>/evil.com"
+  // would otherwise become "//evil.com" and leave the origin.
+  const cleaned = Array.from(next)
+    .filter((char) => char.charCodeAt(0) > 31 && char.charCodeAt(0) !== 127)
+    .join('');
+  if (!cleaned.startsWith('/')) return fallback;
+  if (cleaned.startsWith('//')) return fallback;
+  if (cleaned.includes('\\')) return fallback;
+  return cleaned;
 }
 
 export function refLooksValid(ref: string): boolean {
