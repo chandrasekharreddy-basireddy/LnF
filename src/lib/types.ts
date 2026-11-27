@@ -58,6 +58,8 @@ export type SessionUser = {
   name: string | null;
   roles: string[];
   alertsOptIn: boolean;
+  /** web-push opt-in; separate from email alerts */
+  pushOptIn?: boolean;
   phone?: string | null;
   marketingOptIn?: boolean;
   /** true when the role lookup failed, so "no access" may be wrong */

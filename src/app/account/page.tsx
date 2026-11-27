@@ -1,7 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { currentUser, myItems } from '@/lib/data';
+import { currentUser, myItems, myPushState } from '@/lib/data';
+import { env } from '@/lib/env';
+import { vapidConfig } from '@/lib/push';
+import { PushToggle } from '@/components/push-toggle';
+import { buildWhatsAppLink } from '@/lib/whatsapp';
 import { AccountForm, DeleteAccount } from '@/components/account-form';
 import { StatusChip } from '@/components/status-chip';
 import { formatDate } from '@/lib/validation';
@@ -16,6 +20,16 @@ export default async function AccountPage() {
   const user = await currentUser();
   if (!user) redirect('/sign-in?next=/account');
   const items = await myItems();
+  const push = await myPushState();
+  const pushConfigured = vapidConfig({
+    publicKey: env.vapidPublicKey,
+    privateKey: env.vapidPrivateKey,
+    subject: env.vapidSubject,
+  }).ok;
+  const deskWhatsApp = buildWhatsAppLink(
+    env.deskWhatsApp,
+    `Hi ${env.deskLabel}, I have a question about my account on the L&F board.`,
+  );
   const stored = (await cookies()).get('lnf-theme')?.value;
   const theme = stored === 'light' || stored === 'dark' ? stored : 'auto';
 
@@ -99,6 +113,30 @@ export default async function AccountPage() {
                 alerts={user.alertsOptIn}
                 marketing={user.marketingOptIn ?? false}
               />
+            </div>
+          </section>
+
+          <section className="panel">
+            <div className="panel-head">
+              <strong>Notifications on this device</strong>
+            </div>
+            <div className="panel-body stack">
+              <p className="small muted">
+                Email alerts are the checkbox above. This is web push: a notification when a claim is decided, a
+                handover is confirmed, or a lost report gets a possible match. It is tied to this browser, not to an
+                account key, and the desk cannot read it.
+              </p>
+              <PushToggle
+                configured={pushConfigured}
+                optIn={push.optIn}
+                devices={push.devices}
+                publicKey={pushConfigured ? env.vapidPublicKey : null}
+              />
+              {deskWhatsApp ? (
+                <a className="btn btn-secondary btn-block" href={deskWhatsApp} target="_blank" rel="noopener noreferrer">
+                  Message the desk on WhatsApp
+                </a>
+              ) : null}
             </div>
           </section>
         </div>

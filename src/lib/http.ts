@@ -1,4 +1,5 @@
 import { headers } from 'next/headers';
+import { timingSafeEqual as equalBytes } from 'node:crypto';
 
 /**
  * One place for "who is calling". Vercel puts the client address in
@@ -14,6 +15,21 @@ export function extractIpFromHeaders(get: (name: string) => string | null): stri
   if (!chain) return null;
   const parts = chain.split(',').map((part) => part.trim()).filter(Boolean);
   return parts.length > 0 ? parts[parts.length - 1] : null;
+}
+
+/**
+ * Compares two strings without leaking their length or prefix through timing.
+ * Shared by the cron routes so there is one implementation to get right.
+ */
+export function timingSafeEqualString(a: string, b: string): boolean {
+  const left = Buffer.from(a);
+  const right = Buffer.from(b);
+  if (left.length !== right.length) {
+    // still compare something of equal length so the branch is not the only signal
+    equalBytes(left, left);
+    return false;
+  }
+  return equalBytes(left, right);
 }
 
 /** The caller's address, for throttling buckets that must not be forgeable. */

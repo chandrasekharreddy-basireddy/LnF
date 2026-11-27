@@ -10,6 +10,8 @@ import { SafetyNote } from '@/components/safety-note';
 import { ClaimThreadPanel } from '@/components/claim-thread';
 import { formatDate, formatDateTime } from '@/lib/validation';
 import { env } from '@/lib/env';
+import { DeskWhatsApp } from '@/components/desk-whatsapp';
+import { claimEnquiryMessage } from '@/lib/whatsapp';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Claim status', robots: { index: false, follow: false } };
@@ -114,6 +116,17 @@ export default async function ClaimPage({
               </p>
             </div>
           </div>
+
+          <DeskWhatsApp
+            label="Ask about this claim"
+            message={claimEnquiryMessage({
+              claimRef: claim.ref,
+              itemRef: item.ref,
+              status: claim.status,
+              siteUrl: env.siteUrl,
+              deskLabel: env.deskLabel,
+            })}
+          />
 
           <SafetyNote compact />
         </aside>

@@ -161,7 +161,7 @@ export const currentUser = cache(async function currentUser(): Promise<SessionUs
       supabase.from('user_roles').select('role').eq('user_id', auth.user.id),
       supabase
         .from('profiles')
-        .select('full_name,email,phone,alerts_opt_in,marketing_opt_in')
+        .select('full_name,email,phone,alerts_opt_in,push_opt_in,marketing_opt_in')
         .eq('id', auth.user.id)
         .maybeSingle(),
     ]);
@@ -171,6 +171,7 @@ export const currentUser = cache(async function currentUser(): Promise<SessionUs
       name: profile?.full_name ?? null,
       roles: (roles ?? []).map((r: { role: string }) => r.role),
       alertsOptIn: Boolean(profile?.alerts_opt_in),
+      pushOptIn: Boolean(profile?.push_opt_in),
       phone: (profile?.phone as string | null) ?? null,
       marketingOptIn: Boolean(profile?.marketing_opt_in),
       roleCheckFailed: Boolean(rolesError),
@@ -186,6 +187,30 @@ export function isStaff(user: SessionUser | null): boolean {
 
 export function isAdmin(user: SessionUser | null): boolean {
   return Boolean(user && user.roles.includes('admin'));
+}
+
+export type PushState = { optIn: boolean; devices: number; lastSeenAt: string | null };
+
+/**
+ * The push preference and a device count. Never an endpoint or a key: those are
+ * bearer secrets and no page has a reason to hold one.
+ */
+export async function myPushState(): Promise<PushState> {
+  const empty: PushState = { optIn: false, devices: 0, lastSeenAt: null };
+  try {
+    const supabase = await supabaseServer();
+    const { data, error } = await supabase.rpc('my_push_state');
+    if (error || !data || typeof data !== 'object') return empty;
+    const row = data as { ok?: boolean; optIn?: boolean; devices?: number; lastSeenAt?: string | null };
+    if (row.ok === false) return empty;
+    return {
+      optIn: Boolean(row.optIn),
+      devices: Number(row.devices ?? 0),
+      lastSeenAt: row.lastSeenAt ?? null,
+    };
+  } catch {
+    return empty;
+  }
 }
 
 export async function myClaims(): Promise<ClaimSummary[]> {

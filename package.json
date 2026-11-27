@@ -2,7 +2,7 @@
   "name": "lnf",
   "version": "1.0.0",
   "private": true,
-  "description": "L&F \u2014 a lost and found platform. Report, browse, verify, recover.",
+  "description": "L&F — a lost and found platform. Report, browse, verify, recover.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -23,7 +23,8 @@
     "qrcode": "^1.5.4",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "sharp": "^0.35.5"
+    "sharp": "^0.35.5",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
@@ -33,6 +34,7 @@
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19.3.3",
     "@types/react-dom": "^19.3.0",
+    "@types/web-push": "^3.6.4",
     "eslint": "^9.39.5",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-react-hooks": "^7.1.1",

@@ -89,6 +89,9 @@ If you skip the service key, configure them — Supabase sends the mail instead.
    | `BREVO_SENDER_NAME` | `L&F` |
    | `CRON_SECRET` | a long random string (`openssl rand -hex 24`) |
    | `SUPABASE_SERVICE_ROLE_KEY` | optional, see step 5 |
+   | `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | optional, web push — `npx web-push generate-vapid-keys` |
+   | `VAPID_SUBJECT` | `mailto:` or `https:` contact for the push service |
+   | `DESK_WHATSAPP_NUMBER` | optional, e.g. `+91 98765 43210`; no number, no button |
 
    `NEXT_PUBLIC_*` values are baked in at build time — changing one needs a redeploy.
 
@@ -118,6 +121,11 @@ Two independent schedules; keep both.
 
 The Vercel run also drains `email_outbox`: any send that Brevo refused during the day is
 retried up to three times, keyed so a retry can never become a second email.
+
+Web push is a third, separate job: `/api/cron/push` (bearer `CRON_SECRET`, service role) drains
+notifications queued for push. It is **not** in `vercel.json`, because Hobby crons run once a day
+and a lock-screen alert a day late is not an alert. Point any 15-minute scheduler at it — see
+[docs/notifications.md](notifications.md).
 
 The Vercel job returns 503 with a clear message when `SUPABASE_SERVICE_ROLE_KEY` is absent —
 that is expected, not an error. Add the key and photos get cleaned up too. Vercel sends

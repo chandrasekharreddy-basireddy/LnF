@@ -14,6 +14,8 @@ import { ListingReport } from '@/components/listing-report';
 import { Banner } from '@/components/banner';
 import { CategoryIcon } from '@/components/category-icon';
 import { SaveItemButton } from '@/components/save-controls';
+import { DeskWhatsApp } from '@/components/desk-whatsapp';
+import { itemEnquiryMessage } from '@/lib/whatsapp';
 
 export const dynamic = 'force-dynamic';
 
@@ -204,6 +206,16 @@ export default async function ItemPage({ params, searchParams }: Props) {
               </div>
             </div>
           )}
+
+          <DeskWhatsApp
+            label="Ask about this item"
+            message={itemEnquiryMessage({
+              ref: item.ref,
+              title: item.title,
+              siteUrl: env.siteUrl,
+              deskLabel: env.deskLabel,
+            })}
+          />
 
           {user ? (
             <div className="panel">

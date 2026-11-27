@@ -68,6 +68,13 @@ export const ERRORS: Record<string, string> = {
   ANSWER_REQUIRED: 'Add the answer. It is hashed and never shown.',
   EMAIL_REQUIRED: 'We need an email address to send your code to.',
   HAS_APPROVED_CLAIM: 'An approved claim is waiting to be collected. Confirm or withdraw it before archiving or disposing of the item.',
+  SIGN_IN_REQUIRED: 'Sign in first so we can tie this device to your account.',
+  DEVICE_IN_USE: 'This browser is already registered to a different account. Turn notifications off there first, or use another browser.',
+  TOO_MANY_DEVICES: 'You have five devices registered. Remove one before adding another.',
+  BAD_ENDPOINT: 'That browser sent a subscription we could not verify.',
+  BAD_KEY: 'That browser sent a subscription we could not verify.',
+  BAD_SUBSCRIPTION: 'That browser sent a subscription we could not verify.',
+  PUSH_NOT_CONFIGURED: 'Push is not configured on this deployment.',
 };
 
 export function errorText(code: string | undefined): string {

@@ -40,7 +40,9 @@ const routes = [
   '/staff/items/LF-2026-0007/label',
   '/admin',
   '/api/health',
+  '/api/push/config',
   '/api/cron/housekeeping',
+  '/api/cron/push',
   '/robots.txt',
   '/sitemap.xml',
 ];
@@ -79,6 +81,8 @@ const child = spawn(process.execPath, [path.join(ROOT, 'node_modules/next/dist/b
     NEXT_PUBLIC_SUPABASE_ANON_KEY: 'mock-anon-key',
     NEXT_PUBLIC_SITE_URL: `http://127.0.0.1:${PORT}`,
     CRON_SECRET: 'test-secret',
+    // a real-shaped international number, so the click-to-chat link renders
+    DESK_WHATSAPP_NUMBER: '+91 98765 43210',
   },
 });
 
@@ -173,12 +177,18 @@ try {
   log('CHECK detail has no private keys:', !/answer_hash|contact_email|reporter_id|serial_number/i.test(detail));
   log('CHECK anonymous visitor can claim without an account:', /Claim this item/.test(detail) && /No account needed/.test(detail));
 
+  const waHref = (detail.match(/https:\/\/wa\.me\/919876543210\?text=([^"&]+)/) ?? [])[1] ?? '';
+  const waText = waHref ? decodeURIComponent(waHref) : '';
+  log('CHECK item page offers WhatsApp click-to-chat:', /https:\/\/wa\.me\/919876543210\?text=/.test(detail));
+  log('CHECK WhatsApp message names the item and nothing private:', waText.includes('LF-2026-0007') && !/redmi buds/i.test(waText) && !/answer/i.test(waText));
+  log('CHECK WhatsApp link carries the desk number, not a bare national number:', !/wa\.me\/9876543210\?/.test(detail));
+
   const sensitive = await (await get(BASE + '/items/LF-2026-0009')).text();
   log('CHECK sensitive item hides photo:', /No photo shown/.test(sensitive) && !/bottle\.webp/.test(sensitive));
 
   const staff = await get(BASE + '/staff', { redirect: 'manual' });
   log('CHECK /staff unauthenticated ->', staff.status, staff.headers.get('location'));
-  for (const guarded of ['/staff/scan', '/staff/disposal', '/staff/items/LF-2026-0007/label', '/account/saved', '/messages', '/messages/CLM-2026-0001', '/staff/import']) {
+  for (const guarded of ['/staff/scan', '/staff/disposal', '/staff/items/LF-2026-0007/label', '/account', '/account/saved', '/messages', '/messages/CLM-2026-0001', '/staff/import']) {
     const res = await get(BASE + guarded, { redirect: 'manual' });
     const loc = res.headers.get('location') ?? '';
     const body = await res.text();
@@ -209,6 +219,16 @@ try {
 
   const cron = await get(BASE + '/api/cron/housekeeping');
   log('CHECK cron without bearer ->', cron.status);
+
+  const pushConfig = await (await get(BASE + '/api/push/config')).json();
+  log('CHECK push config is public and disabled without VAPID keys:', pushConfig.enabled === false && pushConfig.publicKey === null);
+  log('CHECK push config leaks no private key:', !/private/i.test(JSON.stringify(pushConfig)));
+
+  const pushCron = await get(BASE + '/api/cron/push');
+  log('CHECK push cron without bearer ->', pushCron.status === 401);
+  const pushCronAuthed = await get(BASE + '/api/cron/push', { headers: { authorization: 'Bearer test-secret' } });
+  const pushCronBody = await pushCronAuthed.json();
+  log('CHECK push cron with bearer but no VAPID names the reason ->', pushCronAuthed.status === 503 && pushCronBody.reason === 'VAPID_KEYS_NOT_SET', JSON.stringify(pushCronBody));
 
   const health = await (await get(BASE + '/api/health')).json();
   log('CHECK health payload:', JSON.stringify(health));

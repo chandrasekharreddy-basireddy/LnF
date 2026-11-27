@@ -25,6 +25,7 @@ Next.js 16 (App Router) · TypeScript · Postgres/RLS · Supabase Storage · Bre
 | Photos carry no location data | every upload re-encoded through `sharp` server-side; EXIF dropped |
 | Retention happens | `public.housekeeping()` runs daily via `pg_cron` (and via Vercel cron when a service key is present) |
 | A wrong claim answer teaches nothing | answer compared as a hash; the claimant never sees whether it matched |
+| A push subscription cannot be hijacked or read | `push_subscriptions` RLS + `register_push_subscription()` takes `auth.uid()`, never an argument; no write grant exists |
 
 ## Routes
 
@@ -42,7 +43,8 @@ Next.js 16 (App Router) · TypeScript · Postgres/RLS · Supabase Storage · Bre
 | `/account/saved` | Saved items and saved searches |
 | `/admin`, `/admin/users`, `/admin/audit` | Recovery metrics, roles, audit log, sample purge |
 | `/legal/privacy`, `/legal/retention`, `/legal/terms`, `/safety`, `/how-it-works` | The written promises, generated from the same constants the code uses |
-| `/api/health`, `/api/cron/housekeeping` | Liveness, and the daily job |
+| `/api/health`, `/api/cron/housekeeping`, `/api/cron/push` | Liveness, the daily job, and the push dispatcher |
+| `/api/push/config` | The VAPID public key, or `{enabled:false}` — public and safe |
 
 ## Quick start
 
@@ -73,8 +75,8 @@ Admins grant the rest from `/admin/users`.
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run build` | production build |
 | `npm run lint` | ESLint 9 flat config: typescript-eslint, react-hooks, jsx-a11y, no `any` |
-| `npm test` | 33 unit tests over the pure logic: path guard, antifraud scan, code extraction, email escaping |
-| `npm run smoke` | starts a local mock of the Supabase API, renders 24 routes, asserts content, privacy, CSP and the redirect guard — and fails the build when a check fails |
+| `npm test` | 105 unit tests over the pure logic: path guard, antifraud scan, code extraction, email escaping, push payloads and WhatsApp links |
+| `npm run smoke` | starts a local mock of the Supabase API, renders 26 routes, asserts content, privacy, CSP, the redirect guard, the push config and the WhatsApp link — and fails the build when a check fails |
 | `npm run e2e` | builds against the mock, then runs Playwright + axe at 360/768/1440 (39 tests) |
 | `npm run shots` | screenshots key pages (needs a browser that can reach localhost) |
 
