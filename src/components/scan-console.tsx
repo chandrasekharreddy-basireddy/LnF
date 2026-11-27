@@ -15,8 +15,9 @@ export function extractCode(raw: string): string | null {
   if (item) return item[0];
   const claim = upper.match(/CLM-\d{4}-\d{4}/);
   if (claim) return claim[0];
-  const handover = upper.match(/\b[2-9A-HJ-NP-Z]{6}\b/);
-  if (handover) return handover[0];
+  // A bare code must be the whole input: "CAMERA" is six allowed characters,
+  // and a typed word must never be mistaken for a handover code.
+  if (/^[2-9A-HJ-NP-Z]{6}$/.test(upper)) return upper;
   return null;
 }
 

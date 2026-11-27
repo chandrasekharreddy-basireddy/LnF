@@ -17,8 +17,7 @@ import { sendEmail, templates } from '@/lib/email';
  */
 
 type IssueResult =
-  | { ok: true; channel: 'brevo'; code: string }
-  | { ok: true; channel: 'supabase' }
+  | { ok: true; channel: 'brevo' | 'supabase' }
   | { ok: false; error: string };
 
 function adminClient(): SupabaseClient | null {
@@ -70,7 +69,7 @@ export async function issueSignInCode(email: string): Promise<IssueResult> {
       return issueViaSupabase(email);
     }
 
-    return { ok: true, channel: 'brevo', code };
+    return { ok: true, channel: 'brevo' };
   } catch {
     return issueViaSupabase(email);
   }

@@ -74,6 +74,8 @@ export async function processAndUploadPhotos(
         position: i,
       });
       if (rowError) {
+        // the object is already in the bucket: remove it rather than leave an orphan
+        await supabase.storage.from('item-photos').remove([path]);
         outcome.skipped.push(`${file.name}: could not attach to listing`);
         continue;
       }

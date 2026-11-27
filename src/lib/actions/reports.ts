@@ -6,19 +6,10 @@ import { supabaseServer } from '@/lib/supabase-server';
 import { currentUser } from '@/lib/data';
 import { errorText } from '@/lib/copy';
 import { bool, clamp, isValidDate, str, todayISO } from '@/lib/validation';
-import { headers } from 'next/headers';
 
-async function callerIp(): Promise<string | null> {
-  try {
-    const list = await headers();
-    const forwarded = list.get('x-forwarded-for');
-    return forwarded ? forwarded.split(',')[0].trim() : list.get('x-real-ip');
-  } catch {
-    return null;
-  }
-}
 import { processAndUploadPhotos } from '@/lib/photos';
 import { sendOrQueue, templates } from '@/lib/email';
+import { callerIp } from '@/lib/http';
 
 export type ReportState = { ok: boolean; error?: string; fieldErrors?: Record<string, string> };
 

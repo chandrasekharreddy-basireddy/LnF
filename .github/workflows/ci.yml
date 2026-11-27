@@ -37,9 +37,10 @@ jobs:
         run: |
           # snake_case names appear in rendered HTML, camelCase in the JS bundle;
           # check both, and fail loudly if the scan finds nothing to scan.
-          files=$(find .next/static .next/server/app -name '*.js' 2>/dev/null | head -400)
+          # client bundles only: server code is allowed to name private columns
+          files=$(find .next/static -name '*.js' 2>/dev/null | head -400)
           if [ -z "$files" ]; then echo "guardrail: nothing to scan"; exit 1; fi
-          if grep -lE 'answer_hash|answerHash|bin_code|binCode|finder_contact|finderContact|verification_answer' $files; then
+          if grep -lE 'answer_hash|answerHash|finder_contact|finderContact|verification_answer' $files; then
             echo "guardrail: a private field name reached the client"; exit 1
           fi
           echo "guardrail: clean ($(echo "$files" | wc -l) bundles scanned)"

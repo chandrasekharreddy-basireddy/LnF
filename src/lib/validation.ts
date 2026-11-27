@@ -16,16 +16,29 @@ export function clamp(value: string, max: number): string {
   return value.length > max ? value.slice(0, max) : value;
 }
 
+const CAMPUS_TZ = process.env.NEXT_PUBLIC_TIMEZONE || 'Asia/Kolkata';
+
+/** The desk's today, not UTC's. */
 export function todayISO(): string {
-  const d = new Date();
-  const off = d.getTimezoneOffset();
-  return new Date(d.getTime() - off * 60_000).toISOString().slice(0, 10);
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: CAMPUS_TZ,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
+  return parts;
 }
 
 export function isValidDate(value: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const d = new Date(value + 'T00:00:00');
-  return !Number.isNaN(d.getTime());
+  const [year, month, day] = value.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  // 2026-02-30 parses happily as 2 March; compare the parts back to catch it
+  return (
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+  );
 }
 
 /**

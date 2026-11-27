@@ -6,6 +6,7 @@ import { currentUser, unreadMessages } from '@/lib/data';
 import { env } from '@/lib/env';
 
 export const metadata: Metadata = {
+  metadataBase: new URL(env.siteUrl),
   title: {
     default: 'L&F — lost and found',
     template: '%s · L&F',

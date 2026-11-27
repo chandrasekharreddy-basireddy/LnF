@@ -40,5 +40,8 @@
     "typescript": "5.9",
     "typescript-eslint": "^8.74.0",
     "vitest": "^4.1.12"
+  },
+  "engines": {
+    "node": ">=22.13.0"
   }
 }

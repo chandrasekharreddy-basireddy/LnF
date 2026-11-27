@@ -1,23 +1,13 @@
 'use server';
 
-import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { supabaseServer } from '@/lib/supabase-server';
 import { isEmail, safeInternalPath, str } from '@/lib/validation';
 import { issueSignInCode, sendWelcome } from '@/lib/auth/signin';
+import { callerIp } from '@/lib/http';
 
 export type AuthState = { step: 'email' | 'otp'; email?: string; error?: string; notice?: string };
 
-async function callerIp(): Promise<string | null> {
-  try {
-    const list = await headers();
-    const forwarded = list.get('x-forwarded-for');
-    if (forwarded) return forwarded.split(',')[0].trim();
-    return list.get('x-real-ip');
-  } catch {
-    return null;
-  }
-}
 
 /** Hash-only audit row. Never the address, never the code. */
 async function logAuthEvent(kind: 'code_requested' | 'code_verified' | 'code_failed' | 'code_throttled', email: string) {

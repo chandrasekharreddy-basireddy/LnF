@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
     serverActions: {
       // phone photos are 2-4 MB; the default 1 MB rejects them before the
       // action runs, with an error nobody can act on
-      bodySizeLimit: '6mb',
+      bodySizeLimit: '16mb',
     },
   },
   reactStrictMode: true,

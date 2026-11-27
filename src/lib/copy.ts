@@ -60,6 +60,13 @@ export const ERRORS: Record<string, string> = {
   WITNESS_REQUIRED: 'This category is released by two people. Choose the staff member who is countersigning.',
   WITNESS_IS_SELF: 'You cannot countersign your own handover.',
   WITNESS_NOT_STAFF: 'That account is not staff. Pick a staff member from the list.',
+  CODE_EXPIRED: 'That handover code has expired. Issue a new one from the claim.',
+  EMAIL_MISMATCH: 'The code was verified for a different address than the claim was started with. Start the claim again.',
+  ALREADY_CLAIMED: 'There is already a claim on this item from this account.',
+  DRAFT_EXPIRED: 'That claim session expired. Start again — it takes a moment.',
+  QUESTION_REQUIRED: 'Add the question a claimant must answer.',
+  ANSWER_REQUIRED: 'Add the answer. It is hashed and never shown.',
+  EMAIL_REQUIRED: 'We need an email address to send your code to.',
   HAS_APPROVED_CLAIM: 'An approved claim is waiting to be collected. Confirm or withdraw it before archiving or disposing of the item.',
 };
 

@@ -8,7 +8,8 @@ import { errorText } from '@/lib/copy';
 import { clamp, str } from '@/lib/validation';
 import { sendOrQueue, templates } from '@/lib/email';
 import { issueSignInCode } from '@/lib/auth/signin';
-import { cookies, headers } from 'next/headers';
+import { cookies } from 'next/headers';
+import { callerIp } from '@/lib/http';
 
 export type ClaimState = { ok: boolean; error?: string; fieldErrors?: Record<string, string> };
 
@@ -64,15 +65,6 @@ export type PublicClaimState = {
   notice?: string;
 };
 
-async function callerIp(): Promise<string | null> {
-  try {
-    const list = await headers();
-    const forwarded = list.get('x-forwarded-for');
-    return forwarded ? forwarded.split(',')[0].trim() : list.get('x-real-ip');
-  } catch {
-    return null;
-  }
-}
 
 /**
  * Claiming without an account.

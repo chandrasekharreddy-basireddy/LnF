@@ -7,7 +7,7 @@ import { EMPTY } from '@/lib/copy';
 import { formatDate } from '@/lib/validation';
 
 export const dynamic = 'force-dynamic';
-export const metadata: Metadata = { title: 'My claims' };
+export const metadata: Metadata = { title: 'My claims', robots: { index: false, follow: false } };
 
 export default async function ClaimsPage() {
   const user = await currentUser();

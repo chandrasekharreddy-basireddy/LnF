@@ -46,7 +46,9 @@ function buildCsp(nonce: string, dev: boolean): string {
 }
 
 export default async function proxy(request: NextRequest) {
-  const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  const nonce = Buffer.from(bytes).toString('base64');
   const csp = buildCsp(nonce, process.env.NODE_ENV !== 'production');
 
   const requestHeaders = new Headers(request.headers);

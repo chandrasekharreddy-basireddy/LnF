@@ -61,12 +61,14 @@ const wrap = (
 
 export async function sendEmail(mail: Mail): Promise<{ ok: boolean; status: number | null }> {
   if (!env.brevoApiKey) {
-    console.info('[email] BREVO_API_KEY not set — skipped:', mail.subject);
+    // the subject of a sign-in mail contains the code; the tag never does
+    console.info('[email] BREVO_API_KEY not set — skipped:', mail.tag ?? 'untagged');
     return { ok: false, status: null };
   }
   try {
     const res = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
+      signal: AbortSignal.timeout(8000),
       headers: {
         'api-key': env.brevoApiKey,
         'content-type': 'application/json',

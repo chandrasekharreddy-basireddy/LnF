@@ -29,7 +29,6 @@ const ALIASES: Record<string, string> = {
   location: 'spot',
   custody: 'custody',
   bin: 'bin',
-  bin_code: 'bin',
 };
 
 /** Split one CSV document into rows of cells. */
