@@ -6,6 +6,8 @@ import { AccountForm, DeleteAccount } from '@/components/account-form';
 import { StatusChip } from '@/components/status-chip';
 import { formatDate } from '@/lib/validation';
 import { signOut } from '@/lib/actions/auth';
+import { ThemeToggle } from '@/components/theme-toggle';
+import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Your account', robots: { index: false, follow: false } };
@@ -14,6 +16,8 @@ export default async function AccountPage() {
   const user = await currentUser();
   if (!user) redirect('/sign-in?next=/account');
   const items = await myItems();
+  const stored = (await cookies()).get('lnf-theme')?.value;
+  const theme = stored === 'light' || stored === 'dark' ? stored : 'auto';
 
   return (
     <div className="section" style={{ marginTop: 8 }}>
@@ -112,6 +116,18 @@ export default async function AccountPage() {
               <Link className="btn btn-secondary btn-block" href="/account/saved">
                 Saved items and searches
               </Link>
+            </div>
+          </div>
+
+          <div className="panel">
+            <div className="panel-head">
+              <strong>Appearance</strong>
+            </div>
+            <div className="panel-body stack">
+              <p className="small muted">
+                Auto follows your device. Light and dark override it until you change it back.
+              </p>
+              <ThemeToggle current={theme} />
             </div>
           </div>
 

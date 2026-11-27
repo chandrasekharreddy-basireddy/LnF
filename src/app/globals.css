@@ -159,6 +159,21 @@ p:last-child { margin-bottom: 0; }
 :root[data-theme="dark"] .custody-label { background: #fff; color: #000; }
 
 /* ---------- theme switch ---------- */
+.theme-flip {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 40px; min-width: 40px; border-radius: var(--radius-sm);
+  border: 1px solid var(--line); background: transparent; color: var(--ink-soft); cursor: pointer;
+}
+.theme-flip:hover { background: var(--brand-soft); color: var(--brand-ink); }
+.theme-flip[disabled] { opacity: 0.6; }
+.flip-icon-moon { display: none; }
+:root[data-theme="dark"] .flip-icon-sun { display: none; }
+:root[data-theme="dark"] .flip-icon-moon { display: block; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .flip-icon-sun { display: none; }
+  :root:not([data-theme="light"]) .flip-icon-moon { display: block; }
+}
+
 .theme-switch { display: inline-flex; border: 1px solid var(--line); border-radius: var(--radius-sm); overflow: hidden; }
 .theme-switch button {
   min-height: 36px; padding: 0 9px; border: 0; background: transparent; color: var(--ink-mute);

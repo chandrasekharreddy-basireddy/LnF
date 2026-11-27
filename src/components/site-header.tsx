@@ -2,10 +2,10 @@ import Link from 'next/link';
 import type { SessionUser } from '@/lib/types';
 import { env } from '@/lib/env';
 import { isStaff } from '@/lib/data';
-import { ThemeToggle } from './theme-toggle';
+import { ThemeFlip } from './theme-flip';
 import { CommandPalette } from './command-palette';
 
-export function SiteHeader({ user, theme }: { user: SessionUser | null; theme?: 'auto' | 'light' | 'dark' }) {
+export function SiteHeader({ user }: { user: SessionUser | null }) {
   return (
     <header className="site-header">
       <div className="wrap header-row">
@@ -34,7 +34,7 @@ export function SiteHeader({ user, theme }: { user: SessionUser | null; theme?: 
             </Link>
           )}
           <CommandPalette staff={isStaff(user)} />
-          <ThemeToggle current={theme ?? 'auto'} />
+          <ThemeFlip />
         </nav>
       </div>
     </header>

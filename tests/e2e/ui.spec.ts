@@ -21,16 +21,33 @@ test.describe('interface', () => {
     await expect(page.getByRole('dialog', { name: 'Quick search' })).toHaveCount(0);
   });
 
-  test('theme choice is server-rendered and survives a reload', async ({ page }) => {
+  test('one tap flips the theme and it survives a reload', async ({ page }) => {
     await page.goto('/');
-    const switcher = page.getByRole('form', { name: 'Colour theme' });
-    await switcher.getByRole('button', { name: 'Dark' }).click();
+    const flip = page.getByRole('button', { name: 'Switch between light and dark theme' });
+    await expect(flip).toBeVisible();
+
+    // the headless browser reports a light system preference, so the first tap
+    // must produce an explicit dark theme
+    await flip.click();
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
 
     await page.reload();
-    // rendered by the server from the cookie, so it is set before first paint
+    // rendered from the cookie by the server, so it is set before first paint
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-    await expect(page.getByRole('button', { name: 'Dark' })).toHaveAttribute('aria-pressed', 'true');
+
+    await page.getByRole('button', { name: 'Switch between light and dark theme' }).click();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  });
+
+  test('the sun and moon icons follow the rendered theme', async ({ page }) => {
+    await page.goto('/');
+    const sun = page.locator('.flip-icon-sun');
+    const moon = page.locator('.flip-icon-moon');
+
+    await page.getByRole('button', { name: 'Switch between light and dark theme' }).click();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+    await expect(moon).toBeVisible();
+    await expect(sun).toBeHidden();
   });
 
   test('photo viewer opens, moves and closes by keyboard', async ({ page }) => {

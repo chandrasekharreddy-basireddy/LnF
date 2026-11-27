@@ -47,7 +47,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <a className="skip" href="#main">
           Skip to content
         </a>
-        <SiteHeader user={user} theme={theme ?? 'auto'} />
+        <SiteHeader user={user} />
         <main id="main">
           <div className="wrap">{children}</div>
         </main>
