@@ -22,8 +22,11 @@ export default async function SignInPage({
     <div className="section" style={{ marginTop: 8, maxWidth: 460 }}>
       <p className="eyebrow">Sign in</p>
       <h1>One email, one code.</h1>
-      <p className="lede" style={{ marginBottom: 24 }}>
-        No password to remember, nothing to leak. We email a 6-digit code that expires in ten minutes.
+      <p className="lede" style={{ marginBottom: 8 }}>
+        No password to remember, nothing to leak. We email a 6-digit code that works once and expires in ten minutes.
+      </p>
+      <p className="small muted" style={{ marginBottom: 24 }}>
+        New here? The same code creates your account — there is no separate sign-up form.
       </p>
 
       <div className="card">

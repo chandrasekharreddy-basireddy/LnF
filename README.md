@@ -16,6 +16,7 @@ Next.js 16 (App Router) · TypeScript · Postgres/RLS · Supabase Storage · Bre
 
 | Promise | Enforced by |
 | --- | --- |
+| A sign-in code is throttled, single-use, and never stored in the clear | `check_signin_allowed()` + Supabase Auth tokens + hash-only `auth_events` |
 | Injected script has no way in | nonce-based CSP minted per request in `src/proxy.ts`, asserted by smoke |
 | A failed email is retried, never lost | `email_outbox` + `sendOrQueue`, dispatched by the daily cron with a dedupe key |
 | Public pages can never see answers, contacts, serials, bins | `public_items` / `public_item_images` views + column-list projection function; base tables have no `anon` grant |

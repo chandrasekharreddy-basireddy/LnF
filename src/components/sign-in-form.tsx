@@ -36,7 +36,8 @@ export function SignInForm({ next = '/account' }: { next?: string }) {
             style={{ fontFamily: 'var(--mono)', fontSize: '1.4rem', letterSpacing: '0.3em', textAlign: 'center' }}
           />
           <p className="hint">
-            Sent to {email}. Check spam if it has not arrived in a minute. You can also click the link in the email.
+            Sent to {email}. Check spam if it has not arrived in a minute, or open the link in the email instead. You can
+            ask for a new code by reloading this page.
           </p>
         </div>
         <SubmitButton pendingLabel="Verifying…">Verify and sign in</SubmitButton>

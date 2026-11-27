@@ -1,48 +1,115 @@
 'use server';
 
+import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { supabaseServer } from '@/lib/supabase-server';
-import { env } from '@/lib/env';
 import { isEmail, safeInternalPath, str } from '@/lib/validation';
+import { issueSignInCode, sendWelcome } from '@/lib/auth/signin';
 
 export type AuthState = { step: 'email' | 'otp'; email?: string; error?: string; notice?: string };
+
+async function callerIp(): Promise<string | null> {
+  try {
+    const list = await headers();
+    const forwarded = list.get('x-forwarded-for');
+    if (forwarded) return forwarded.split(',')[0].trim();
+    return list.get('x-real-ip');
+  } catch {
+    return null;
+  }
+}
+
+/** Hash-only audit row. Never the address, never the code. */
+async function logAuthEvent(kind: 'code_requested' | 'code_verified' | 'code_failed' | 'code_throttled', email: string) {
+  try {
+    const supabase = await supabaseServer();
+    await supabase.rpc('log_auth_event', {
+      p_kind: kind,
+      p_email: email,
+      p_ip: await callerIp(),
+    });
+  } catch {
+    // an audit row is not worth failing a sign-in over
+  }
+}
 
 export async function requestOtp(_prev: AuthState, formData: FormData): Promise<AuthState> {
   const email = str(formData.get('email')).toLowerCase();
   if (!isEmail(email)) return { step: 'email', error: 'Enter a valid email address, for example name@campus.edu.' };
 
+  // Throttle before anything is generated, so the form cannot be used to post
+  // mail at somebody else's address.
   try {
     const supabase = await supabaseServer();
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        shouldCreateUser: true,
-        emailRedirectTo: `${env.siteUrl}/auth/confirm`,
-      },
+    const { data } = await supabase.rpc('check_signin_allowed', {
+      p_email: email,
+      p_ip: await callerIp(),
     });
-    if (error) return { step: 'email', email, error: error.message };
-    return { step: 'otp', email, notice: `We sent a 6-digit code to ${email}. It expires in 10 minutes.` };
+    const verdict = data as { allowed?: boolean; reason?: string } | null;
+    if (verdict && verdict.allowed === false) {
+      await logAuthEvent('code_throttled', email);
+      return {
+        step: 'email',
+        email,
+        error:
+          verdict.reason === 'ip'
+            ? 'Too many sign-in attempts from this connection. Wait fifteen minutes and try again.'
+            : 'We have sent several codes to that address already. Wait a few minutes, then try again.',
+      };
+    }
   } catch {
-    return { step: 'email', email, error: 'Sign-in is not available right now. Try again in a minute.' };
+    // if the throttle itself is unreachable, the provider's own limits still apply
   }
+
+  const issued = await issueSignInCode(email);
+  if (!issued.ok) return { step: 'email', email, error: issued.error };
+
+  await logAuthEvent('code_requested', email);
+
+  // Deliberately identical whether or not an account existed: the screen must
+  // not tell an attacker which addresses are registered.
+  return {
+    step: 'otp',
+    email,
+    notice: `We sent a 6-digit code to ${email}. It works once and expires in ten minutes.`,
+  };
 }
 
 export async function verifyOtp(_prev: AuthState, formData: FormData): Promise<AuthState> {
   const email = str(formData.get('email')).toLowerCase();
   const token = str(formData.get('token')).replace(/\s+/g, '');
   const next = safeInternalPath(str(formData.get('next')));
+
   if (!/^\d{6}$/.test(token)) {
     return { step: 'otp', email, error: 'Enter the 6-digit code from the email.' };
   }
+
+  let firstTime = false;
+  let name: string | null = null;
+
   try {
     const supabase = await supabaseServer();
     const { error } = await supabase.auth.verifyOtp({ email, token, type: 'email' });
     if (error) {
+      await logAuthEvent('code_failed', email);
       return { step: 'otp', email, error: 'That code is wrong or has expired. Request a new one.' };
     }
+
+    // The code proved the address. Record that, and greet a new account once.
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('full_name,email_verified_at')
+      .maybeSingle();
+    firstTime = !profile?.email_verified_at;
+    name = (profile?.full_name as string | null) ?? null;
+
+    await supabase.rpc('mark_email_verified');
+    await logAuthEvent('code_verified', email);
   } catch {
     return { step: 'otp', email, error: 'Could not verify the code. Try again.' };
   }
+
+  if (firstTime) await sendWelcome(email, name);
   redirect(next);
 }
 

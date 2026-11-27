@@ -17,7 +17,7 @@ Region chosen: **ap-south-1 (Mumbai)** — lowest latency for users in India.
 ## 1. Database (already done for this project)
 
 Project ref: `<your-project-ref>` (Project Settings → General). The schema is applied in
-fifteen migrations; this repository is deployed against a live project in `ap-south-1`, and
+seventeen migrations; this repository is deployed against a live project in `ap-south-1`, and
 the values below are the ones that project uses — swap in yours.
 
 | File | Contents |
@@ -37,6 +37,8 @@ the values below are the ones that project uses — swap in yours.
 | `0013_retention_and_disposal.sql` | per-category retention, disposal queue, auditable dispositions |
 | `0014_audit_fixes.sql` | quarantine stub, anon revocations, message RLS, handover locking, retention guard, the pg_cron schedule |
 | `0015_audit_followups.sql` | approved-claim guards on status change and disposal, sequence revocation, seed dedupe |
+| `0016_auth_layer.sql` | sign-in throttle, hash-only auth audit, `email_verified_at` |
+| `0017_pgcrypto_search_path.sql` | makes `digest()` reachable inside the definer functions — without it, reporting, claiming, approving and handover all fail at runtime |
 
 To rebuild from scratch on a new project, paste each file into the SQL editor in order, or:
 
@@ -46,6 +48,11 @@ npx supabase db push
 ```
 
 ## 2. Supabase Auth — email codes through Brevo
+
+Sign-in emails are sent by the app itself (see `docs/auth-architecture.md`): the code is
+minted with the admin API and delivered through Brevo with our template. **If you set
+`SUPABASE_SERVICE_ROLE_KEY`, the SMTP settings below are only needed for the fallback path.**
+If you skip the service key, configure them — Supabase sends the mail instead.
 
 1. **Brevo → SMTP & API → SMTP.** Create an SMTP key. Note host `smtp-relay.brevo.com`,
    port `587`, login `your-brevo-login`, and the key as password.

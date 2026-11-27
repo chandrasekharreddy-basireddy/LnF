@@ -9,22 +9,55 @@ const esc = (value: unknown): string =>
 
 type Mail = { to: string; subject: string; html: string; text: string; tag?: string };
 
-const wrap = (title: string, body: string, cta?: { label: string; href: string }) => `<!doctype html>
-<html><body style="margin:0;padding:24px;background:#f4f4f1;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#15211f">
-  <table role="presentation" width="100%" style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:12px;padding:28px">
-    <tr><td>
-      <p style="margin:0 0 4px;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#5b6b66">L&amp;F · ${esc(env.campusName)}</p>
-      <h1 style="margin:0 0 16px;font-size:21px;line-height:1.3">${esc(title)}</h1>
-      <div style="font-size:15px;line-height:1.6;color:#243430">${body}</div>
-      ${cta ? `<p style="margin:24px 0 8px"><a href="${cta.href}" style="background:#14524b;color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;display:inline-block;font-weight:600">${esc(cta.label)}</a></p>` : ''}
-      <hr style="border:none;border-top:1px solid #e6e6e1;margin:24px 0">
-      <p style="margin:0;font-size:12px;color:#5b6b66;line-height:1.6">
-        Never pay to get an item back. Collect from ${esc(env.deskLabel)}.<br>
-        This is a service message about your L&amp;F account.
-      </p>
+const wrap = (
+  title: string,
+  body: string,
+  cta?: { label: string; href: string },
+  options: { preheader?: string; footerNote?: string } = {},
+) => `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>${esc(title)}</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f4f1;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#15211f">
+  ${options.preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0">${esc(options.preheader)}</div>` : ''}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f1;padding:28px 12px">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px">
+        <tr><td style="padding:0 4px 14px">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+            <td style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;font-weight:700;letter-spacing:-0.02em;color:#14524b">
+              L&amp;F
+            </td>
+            <td align="right" style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#6b7a75">
+              ${esc(env.campusName)}
+            </td>
+          </tr></table>
+        </td></tr>
+
+        <tr><td style="background:#ffffff;border:1px solid #e2e4df;border-radius:14px;padding:28px">
+          <h1 style="margin:0 0 14px;font-size:21px;line-height:1.28;letter-spacing:-0.01em;color:#12211e">${esc(title)}</h1>
+          <div style="font-size:15px;line-height:1.62;color:#243430">${body}</div>
+          ${cta ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0 6px"><tr>
+              <td style="background:#14524b;border-radius:9px">
+                <a href="${esc(cta.href)}" style="display:inline-block;padding:13px 20px;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none">${esc(cta.label)}</a>
+              </td></tr></table>` : ''}
+        </td></tr>
+
+        <tr><td style="padding:18px 6px 0;font-size:12px;line-height:1.6;color:#5b6b66">
+          <strong style="color:#243430">Never pay to get an item back.</strong>
+          Handovers happen at ${esc(env.deskLabel)}, against an approved claim.
+          ${options.footerNote ? `<br><br>${options.footerNote}` : ''}
+          <br><br>
+          <span style="color:#8a938f">L&amp;F · ${esc(env.campusName)} · ${esc(env.supportEmail)}</span>
+        </td></tr>
+      </table>
     </td></tr>
   </table>
-</body></html>`;
+</body>
+</html>`;
 
 export async function sendEmail(mail: Mail): Promise<{ ok: boolean; status: number | null }> {
   if (!env.brevoApiKey) {
@@ -55,7 +88,54 @@ export async function sendEmail(mail: Mail): Promise<{ ok: boolean; status: numb
   }
 }
 
+const codeBlock = (code: string) => `
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:18px 0 8px">
+    <tr><td align="center" style="background:#e9f2ef;border:1px dashed #14524b;border-radius:12px;padding:18px">
+      <span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:34px;font-weight:700;letter-spacing:.34em;color:#0d3b36">${esc(code)}</span>
+    </td></tr>
+  </table>
+  <p style="margin:0;font-size:12px;color:#5b6b66;text-align:center">Expires in 10 minutes · single use · never share it</p>`;
+
 export const templates = {
+  signInCode: (code: string, email: string, kind: 'signin' | 'signup' = 'signin') => ({
+    subject:
+      kind === 'signup'
+        ? `${code} is your L&F sign-in code`
+        : `${code} is your L&F sign-in code`,
+    html: wrap(
+      kind === 'signup' ? 'Welcome — here is your code' : 'Your sign-in code',
+      `<p>Enter this code on the sign-in screen. It works once, for ten minutes.</p>
+       ${codeBlock(code)}
+       <p style="margin-top:14px;font-size:13px;color:#5b6b66">
+         If you did not ask to sign in, ignore this email. Nobody can use the code without seeing it here.
+       </p>`,
+      { label: 'Or open L&F', href: `${env.siteUrl}/sign-in` },
+      {
+        preheader: `Your L&F code is ${code}`,
+        footerNote: `Sent because someone entered <strong>${esc(email)}</strong> on the sign-in screen.`,
+      },
+    ),
+    text: `Your L&F sign-in code is ${code}. It expires in 10 minutes and works once. ${env.siteUrl}/sign-in`,
+    tag: 'sign-in-code',
+  }),
+
+  welcome: (name: string | null) => ({
+    subject: 'You are in — how L&F works',
+    html: wrap(
+      name ? `Hello, ${name}` : 'You are in',
+      `<p>Three things worth knowing before you use the board:</p>
+       <ul style="padding-left:18px;margin:0 0 12px">
+         <li style="margin-bottom:6px"><strong>Report it once.</strong> A lost report is a standing question — we email you when something similar is handed in.</li>
+         <li style="margin-bottom:6px"><strong>Prove it, do not describe it.</strong> Claims are checked against the question the finder wrote, not against how well you describe the item.</li>
+         <li><strong>Collect at the desk.</strong> One code, one handover, photo ID if the item is valuable. Nothing to pay, ever.</li>
+       </ul>`,
+      { label: 'Open the board', href: `${env.siteUrl}/browse` },
+      { footerNote: 'You can turn match alerts off from your account page at any time.' },
+    ),
+    text: 'You are in. Report once, prove it, collect at the desk. Browse: ' + env.siteUrl + '/browse',
+    tag: 'welcome',
+  }),
+
   itemPublished: (ref: string, title: string, kind: 'lost' | 'found') => ({
     subject: kind === 'found' ? `Handed in: ${title} (${ref})` : `Lost report live: ${title} (${ref})`,
     html: wrap(
