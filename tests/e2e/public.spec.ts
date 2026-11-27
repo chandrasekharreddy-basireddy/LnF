@@ -37,7 +37,8 @@ test.describe('public board', () => {
     await page.goto(ITEM);
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Black wireless earbuds');
     await expect(page.getByText('To claim this, tell us')).toBeVisible();
-    await expect(page.getByText('Bluetooth name of the case')).toBeVisible();
+    // the question appears twice now: in the public panel and as the claim field label
+    await expect(page.getByText('Bluetooth name of the case').first()).toBeVisible();
     // claiming no longer needs an account: the form is right there
     await expect(page.getByRole('button', { name: 'Claim this item' })).toBeVisible();
     await expect(page.getByLabel('Your email')).toBeVisible();
