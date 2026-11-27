@@ -9,6 +9,7 @@ import { PhotoGallery } from '@/components/photo-gallery';
 import { SafetyNote } from '@/components/safety-note';
 import { StatusChip } from '@/components/status-chip';
 import { ClaimForm } from '@/components/claim-form';
+import { PublicClaimForm } from '@/components/public-claim-form';
 import { ListingReport } from '@/components/listing-report';
 import { Banner } from '@/components/banner';
 import { CategoryIcon } from '@/components/category-icon';
@@ -171,14 +172,7 @@ export default async function ItemPage({ params, searchParams }: Props) {
                   user ? (
                     <ClaimForm itemRef={item.ref} question={item.verificationQuestion} />
                   ) : (
-                    <div className="stack">
-                      <p className="small">
-                        Sign in with your email so the desk can verify you and send updates. No password needed.
-                      </p>
-                      <Link className="btn btn-block" href={`/sign-in?next=/items/${item.ref}`}>
-                        Sign in to claim
-                      </Link>
-                    </div>
+                    <PublicClaimForm itemRef={item.ref} question={item.verificationQuestion} />
                   )
                 ) : (
                   <div className="stack">

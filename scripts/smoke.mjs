@@ -26,6 +26,7 @@ const routes = [
   '/items/LF-2026-0007',
   '/items/LF-2026-0009',
   '/items/LF-2026-9999',
+  '/hand-in',
   '/safety',
   '/how-it-works',
   '/legal/privacy',
@@ -170,7 +171,7 @@ try {
   log('CHECK detail shows custody:', /Main Gate &amp; Security Desk/.test(detail));
   log('CHECK detail has no answer leak:', !/redmi buds/i.test(detail));
   log('CHECK detail has no private keys:', !/answer_hash|contact_email|reporter_id|serial_number/i.test(detail));
-  log('CHECK detail has claim sign-in CTA:', /Sign in to claim/.test(detail));
+  log('CHECK anonymous visitor can claim without an account:', /Claim this item/.test(detail) && /No account needed/.test(detail));
 
   const sensitive = await (await get(BASE + '/items/LF-2026-0009')).text();
   log('CHECK sensitive item hides photo:', /No photo shown/.test(sensitive) && !/bottle\.webp/.test(sensitive));
