@@ -1,10 +1,11 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 import { createReport, type ReportState } from '@/lib/actions/reports';
 import { SubmitButton } from './submit-button';
 import { Banner } from './banner';
 import { todayISO } from '@/lib/validation';
+import { compressSelectedPhotos } from '@/lib/client-photo';
 
 const initial: ReportState = { ok: false };
 
@@ -24,6 +25,7 @@ export function ReportForm({
   defaultZone?: string;
 }) {
   const [state, action] = useActionState(createReport, initial);
+  const [photoNotice, setPhotoNotice] = useState<string | null>(null);
   const fe = state.fieldErrors ?? {};
 
   return (
@@ -186,7 +188,20 @@ export function ReportForm({
 
           <div className="field">
             <label htmlFor="photos">Photos (optional, up to 3)</label>
-            <input id="photos" name="photos" type="file" accept="image/jpeg,image/png,image/webp" multiple />
+            <input
+              id="photos"
+              name="photos"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              multiple
+              onChange={async (event) => {
+                // shrink on the phone: a 4 MB photo is rejected by the platform
+                // before it ever reaches the action
+                const problem = await compressSelectedPhotos(event.target);
+                setPhotoNotice(problem);
+              }}
+            />
+            {photoNotice ? <p className="hint">{photoNotice}</p> : null}
             <p className="hint">
               JPG, PNG or WebP, up to 5 MB each. Location data and camera details are removed from your photo before
               it is stored.
@@ -204,7 +219,18 @@ export function ReportForm({
       ) : (
         <div className="field">
           <label htmlFor="photos">A photo you already have (optional)</label>
-          <input id="photos" name="photos" type="file" accept="image/jpeg,image/png,image/webp" multiple />
+          <input
+            id="photos"
+            name="photos"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            multiple
+            onChange={async (event) => {
+              const problem = await compressSelectedPhotos(event.target);
+              setPhotoNotice(problem);
+            }}
+          />
+          {photoNotice ? <p className="hint">{photoNotice}</p> : null}
           <p className="hint">Up to 3 images, 5 MB each. Metadata is removed on upload.</p>
         </div>
       )}

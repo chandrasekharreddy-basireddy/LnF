@@ -22,6 +22,15 @@ describe('scanText', () => {
     expect(result.flags.map((f) => f.category)).toContain(category);
   });
 
+  it.each([
+    ['call me on 98765 43210', 'contact'],
+    ['+91-98765-43210', 'contact'],
+    ['pan abcde1234f', 'id_number'],
+    ['my aadhaar is 2345-6789-0123', 'id_number'],
+  ])('catches the shapes a scammer actually writes: %s', (text, category) => {
+    expect(scanText(text).flags.map((f) => f.category)).toContain(category);
+  });
+
   it('does not fire on words that merely contain a trigger', () => {
     expect(scanText('The case has a small sticker on the back').blocked).toBe(false);
     expect(scanText('A U-shaped dent in the lid').blocked).toBe(false);

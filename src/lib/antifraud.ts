@@ -13,12 +13,12 @@ const PATTERNS: { category: ScanFlag['category']; reason: string; test: RegExp }
   {
     category: 'contact',
     reason: 'Contains a phone number or email address',
-    test: /([a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}|(^|[^0-9])(\+?91)?[6-9][0-9]{9}([^0-9]|$))/i,
+    test: /([a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}|(^|[^0-9])(\+?91[\s-]?)?[6-9][0-9]{4}[\s-]?[0-9]{5}([^0-9]|$))/i,
   },
   {
     category: 'id_number',
     reason: 'Contains an identity or card number',
-    test: /([2-9][0-9]{3}\s?[0-9]{4}\s?[0-9]{4}|[A-Z]{5}[0-9]{4}[A-Z])/,
+    test: /([2-9][0-9]{3}[\s-]?[0-9]{4}[\s-]?[0-9]{4}|(^|[^a-z0-9])[a-z]{5}[0-9]{4}[a-z]([^a-z0-9]|$))/i,
   },
 ];
 
