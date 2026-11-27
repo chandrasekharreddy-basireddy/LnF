@@ -400,6 +400,39 @@ export async function staffQueue() {
   }
 }
 
+export type MatchCandidate = {
+  lostRef: string;
+  lostTitle: string;
+  lostCategory: string;
+  foundRef: string;
+  foundTitle: string;
+  foundCategory: string;
+  zone: string | null;
+  score: number;
+  titleScore: number | null;
+  photoScore: number | null;
+  photoDistance: number | null;
+  dayGap: number;
+  notifiedAt: string | null;
+  createdAt: string;
+};
+
+/**
+ * Possible matches for the desk, with the numbers behind each score. The function
+ * returns null for anyone who is not staff, so an empty list here means "staff,
+ * nothing to look at" and null means "not staff".
+ */
+export async function matchQueue(limit = 50): Promise<MatchCandidate[] | null> {
+  try {
+    const supabase = await supabaseServer();
+    const { data, error } = await supabase.rpc('match_queue', { p_limit: limit });
+    if (error) return null;
+    return (data as MatchCandidate[] | null) ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function staffItem(ref: string) {
   try {
     const supabase = await supabaseServer();

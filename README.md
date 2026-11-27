@@ -26,6 +26,7 @@ Next.js 16 (App Router) · TypeScript · Postgres/RLS · Supabase Storage · Bre
 | Retention happens | `public.housekeeping()` runs daily via `pg_cron` (and via Vercel cron when a service key is present) |
 | A wrong claim answer teaches nothing | answer compared as a hash; the claimant never sees whether it matched |
 | A push subscription cannot be hijacked or read | `push_subscriptions` RLS + `register_push_subscription()` takes `auth.uid()`, never an argument; no write grant exists |
+| A photo hash can only be written by the person who uploaded the photo | column-level `INSERT` grant on `item_images` excludes `phash`; `set_item_photo_hash()` checks the path's owner and the listing |
 
 ## Routes
 
@@ -40,6 +41,7 @@ Next.js 16 (App Router) · TypeScript · Postgres/RLS · Supabase Storage · Bre
 | `/staff/import` | Paste a backlog spreadsheet: 500 rows a pass, same validation and quarantine as a single intake |
 | `/staff`, `/staff/items/[ref]` | Desk queue, claim review, handover confirmation, listing controls |
 | `/staff/scan`, `/staff/disposal`, `/staff/items/[ref]/label` | Counter scanner, disposal queue, printable 2×3in custody label |
+| `/staff/matches` | Possible lost↔found pairs, with the title, category, zone, date and photo numbers behind each score |
 | `/account/saved` | Saved items and saved searches |
 | `/admin`, `/admin/users`, `/admin/audit` | Recovery metrics, roles, audit log, sample purge |
 | `/legal/privacy`, `/legal/retention`, `/legal/terms`, `/safety`, `/how-it-works` | The written promises, generated from the same constants the code uses |

@@ -1,11 +1,12 @@
 import sharp from 'sharp';
 import { supabaseServer } from './supabase-server';
+import { dhashFromImage } from './phash-image';
 
 const MAX_BYTES = 5 * 1024 * 1024;
 const MAX_FILES = 3;
 const ALLOWED = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
 
-export type UploadOutcome = { inserted: number; skipped: string[] };
+export type UploadOutcome = { inserted: number; hashed: number; skipped: string[] };
 
 /**
  * Re-encodes every upload through sharp before it leaves the server:
@@ -18,7 +19,7 @@ export async function processAndUploadPhotos(
   ref: string,
   title: string,
 ): Promise<UploadOutcome> {
-  const outcome: UploadOutcome = { inserted: 0, skipped: [] };
+  const outcome: UploadOutcome = { inserted: 0, hashed: 0, skipped: [] };
   const supabase = await supabaseServer();
   const accepted = files.filter((f) => f && f.size > 0).slice(0, MAX_FILES);
   if (!accepted.length) return outcome;
@@ -80,8 +81,32 @@ export async function processAndUploadPhotos(
         continue;
       }
       outcome.inserted += 1;
+
+      // A hash is a bonus, never a condition of a successful upload: the photo
+      // is already stored and attached by this point.
+      try {
+        const hash = await dhashFromImage(output);
+        const { data: hashed } = await supabase.rpc('set_item_photo_hash', {
+          p_storage_path: path,
+          p_phash: hash.toString(),
+        });
+        if ((hashed as { ok?: boolean } | null)?.ok) outcome.hashed += 1;
+      } catch {
+        // matching falls back to text and category for this listing
+      }
     } catch {
       outcome.skipped.push(`${file.name}: could not be read as an image`);
+    }
+  }
+
+  // create_item() scored this listing before its photos existed. With a hash in
+  // place the pair can now be scored on the photo too. The function checks that
+  // the caller may re-score this listing; a refusal is not an upload failure.
+  if (outcome.hashed > 0) {
+    try {
+      await supabase.rpc('recompute_item_matches', { p_ref: ref });
+    } catch {
+      // the next listing that matches will still be scored against this one
     }
   }
 

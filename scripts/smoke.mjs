@@ -188,7 +188,7 @@ try {
 
   const staff = await get(BASE + '/staff', { redirect: 'manual' });
   log('CHECK /staff unauthenticated ->', staff.status, staff.headers.get('location'));
-  for (const guarded of ['/staff/scan', '/staff/disposal', '/staff/items/LF-2026-0007/label', '/account', '/account/saved', '/messages', '/messages/CLM-2026-0001', '/staff/import']) {
+  for (const guarded of ['/staff/scan', '/staff/disposal', '/staff/matches', '/staff/items/LF-2026-0007/label', '/account', '/account/saved', '/messages', '/messages/CLM-2026-0001', '/staff/import']) {
     const res = await get(BASE + guarded, { redirect: 'manual' });
     const loc = res.headers.get('location') ?? '';
     const body = await res.text();
@@ -196,7 +196,7 @@ try {
     // the redirect to the client in a 200 payload. Both are correct; rendering
     // the staff UI is not.
     const redirected = (res.status === 307 && loc.includes('/sign-in')) || /\/sign-in\?next=/.test(body);
-    const leaked = /Disposal queue|Scan a tag|Saved searches/.test(body);
+    const leaked = /Disposal queue|Scan a tag|Saved searches|No pairs waiting/.test(body);
     log(`CHECK ${guarded} guarded ->`, redirected && !leaked, `(${res.status})`);
   }
 

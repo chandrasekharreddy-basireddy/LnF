@@ -45,6 +45,8 @@ and never passes a raw row through. Three rules hold the privacy boundary:
 | Messaging | `post_claim_message()` scans for payment requests, phone numbers, emails and ID numbers; hits are quarantined and audited, never delivered |
 | Retention | `retention_policies` sets the window per category; `create_item` reads it, `housekeeping()` enforces it, `/legal/retention` renders the same rows |
 | Saved | `saved_items` / `saved_searches`; `run_saved_searches()` runs inside housekeeping and sends one notification per run |
+| Photo hash | `processAndUploadPhotos` → `dhashFromImage` → `set_item_photo_hash(path, hash)` → `recompute_item_matches(ref)` |
+| Match review | `/staff/matches` → `match_queue(limit)`, which returns null unless `is_staff()` |
 | Theme | a `lnf-theme` cookie read in the layout, so `data-theme` is on `<html>` before first paint |
 
 ## Matching
@@ -56,11 +58,20 @@ score = 0.55 · similarity(lost.title, found.title)
       + 0.25 · (same category)
       + 0.10 · (same zone)
       + up to 0.10 · (closer event dates, within 45 days)
+      + 0.35 · photo similarity          (migration 0029)
+
+photo similarity = max(0, 1 − hamming(dHash_lost, dHash_found) / 24)
 ```
 
-Candidates are limited to the same category or a title similarity above 0.3, and only pairs
-scoring ≥ 0.35 become a `match_alerts` row. The platform surfaces *possible matches*; it
-never declares an item found, and it never emails a claimant a "confirmed" match.
+Candidates are limited to the same category, a title similarity above 0.3, or photos within 12
+of 64 bits — so a re-described item can be found by its picture alone. Only pairs scoring ≥ 0.35
+become a `match_alerts` row, and each row stores the title score, photo score and photo distance
+that produced it, so the desk can see why. The platform surfaces *possible matches*; it never
+declares an item found, and it never emails a claimant a "confirmed" match.
+
+The photo hash is a 64-bit dHash computed server-side with `sharp` at upload time, stored on
+`item_images.phash`, and written only by `set_item_photo_hash()`. See
+[photo-matching.md](photo-matching.md) for the arithmetic, the authorization rules and the limits.
 
 ## Rendering and speed
 

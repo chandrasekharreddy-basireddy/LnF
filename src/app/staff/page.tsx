@@ -52,6 +52,9 @@ export default async function StaffPage() {
           <Link className="btn btn-secondary btn-sm" href="/staff/scan">
             Scan a tag
           </Link>
+          <Link className="btn btn-secondary btn-sm" href="/staff/matches">
+            Possible matches
+          </Link>
           <Link className="btn btn-secondary btn-sm" href="/staff/disposal">
             Disposal queue
           </Link>
