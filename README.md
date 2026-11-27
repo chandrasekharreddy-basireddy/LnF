@@ -36,6 +36,7 @@ Next.js 16 (App Router) · TypeScript · Postgres/RLS · Supabase Storage · Bre
 | `/report/found`, `/report/lost` | Intake forms with photo privacy, consent notice, full error states |
 | `/claims`, `/claims/[ref]` | Claim list, one-time handover code, and a masked message thread |
 | `/account` | Profile, alerts opt-in, your listings, erasure request |
+| `/staff/import` | Paste a backlog spreadsheet: 500 rows a pass, same validation and quarantine as a single intake |
 | `/staff`, `/staff/items/[ref]` | Desk queue, claim review, handover confirmation, listing controls |
 | `/staff/scan`, `/staff/disposal`, `/staff/items/[ref]/label` | Counter scanner, disposal queue, printable 2×3in custody label |
 | `/account/saved` | Saved items and saved searches |
