@@ -11,7 +11,7 @@ green on `main`.
 | — | Chat system (threads, unread, live delivery) | [x] done |
 | 2 | Bulk backlog importer | [x] done — migration 0021, /staff/import, CSV parser with tests |
 | 3 | Notifications: web push + WhatsApp click-to-chat | [x] done — migration 0028, `push_subscriptions` + service-role dispatcher, `wa.me` links; push to a real device still unproven (see `docs/notifications.md`) |
-| 4 | Photo-similarity matching | [ ] |
+| 4 | Photo-similarity matching | [x] done — migration 0029, 64-bit dHash on `item_images.phash`, photo term in `refresh_matches()`, `/staff/matches` queue; see `docs/photo-matching.md` |
 | 5 | Claim-proof attachments (redacted) | [ ] needs a product decision — see below |
 | 6 | Dispute room + trust signals | [ ] |
 | 7 | Institution analytics + monthly PDF | [ ] |
