@@ -38,7 +38,9 @@ test.describe('public board', () => {
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Black wireless earbuds');
     await expect(page.getByText('To claim this, tell us')).toBeVisible();
     await expect(page.getByText('Bluetooth name of the case')).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Sign in to claim' })).toBeVisible();
+    // claiming no longer needs an account: the form is right there
+    await expect(page.getByRole('button', { name: 'Claim this item' })).toBeVisible();
+    await expect(page.getByLabel('Your email')).toBeVisible();
 
     const body = (await page.content()).toLowerCase();
     for (const forbidden of ['redmi buds', 'answer_hash', 'contact_email', 'reporter_id', 'finder_contact']) {
