@@ -58,7 +58,9 @@ try {
   process.exit(1);
 }
 
-const child = spawn('npx', ['next', 'start', '-p', String(PORT)], {
+// Call the installed binary through this node process: no reliance on PATH,
+// no npx resolution, and it works the same locally and in CI.
+const child = spawn(process.execPath, ['node_modules/next/dist/bin/next', 'start', '-p', String(PORT)], {
   cwd: '/scratch/work/lnf',
   stdio: ['ignore', 'pipe', 'pipe'],
   env: {
@@ -71,6 +73,10 @@ const child = spawn('npx', ['next', 'start', '-p', String(PORT)], {
 });
 
 let serverLog = '';
+child.on('error', (err) => {
+  failures += 1;
+  log('SMOKE FAILED to start the server: ' + err.message);
+});
 child.stdout.on('data', (d) => (serverLog += d.toString()));
 child.stderr.on('data', (d) => (serverLog += d.toString()));
 
