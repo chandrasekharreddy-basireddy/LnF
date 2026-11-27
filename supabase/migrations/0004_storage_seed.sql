@@ -35,7 +35,8 @@ on conflict (code) do nothing;
 insert into public.items
   (type, status, category, title, public_description, zone_id, spot, event_date,
    custody_label, verification_question, reporter_id, reporter_kind, is_sample, published_at)
-values
+select *
+from (values
   ('found', 'available', 'electronics', 'Black wireless earbuds in a charging case',
    'Matte black earbuds in an open case. A small sticker on the back of the case. Found on a study desk.',
    (select id from public.campus_zones where code = 'library'), 'Quiet study desks, north windows',
@@ -65,7 +66,9 @@ values
    (select id from public.campus_zones where code = 'lab'), 'Lab 3, seat 12',
    current_date - 20, 'Main Gate & Security Desk', 'What is the brand printed on the brick?',
    null, 'staff', true, now() - interval '20 days')
-on conflict do nothing;
+) as seed(type, status, category, title, public_description, zone_id, spot, event_date,
+          custody_label, verification_question, reporter_id, reporter_kind, is_sample, published_at)
+where not exists (select 1 from public.items where is_sample);
 
 insert into public.item_private (item_id, answer_hash)
 select id, encode(digest(lower('redmi buds'), 'sha256'), 'hex')

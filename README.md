@@ -71,7 +71,8 @@ Admins grant the rest from `/admin/users`.
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run build` | production build |
 | `npm run lint` | ESLint 9 flat config: typescript-eslint, react-hooks, jsx-a11y, no `any` |
-| `npm run smoke` | starts a local mock of the Supabase API, renders 21 routes, asserts content, privacy, CSP and the redirect guard |
+| `npm test` | 33 unit tests over the pure logic: path guard, antifraud scan, code extraction, email escaping |
+| `npm run smoke` | starts a local mock of the Supabase API, renders 24 routes, asserts content, privacy, CSP and the redirect guard — and fails the build when a check fails |
 | `npm run e2e` | builds against the mock, then runs Playwright + axe at 360/768/1440 (39 tests) |
 | `npm run shots` | screenshots key pages (needs a browser that can reach localhost) |
 

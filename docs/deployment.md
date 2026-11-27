@@ -17,7 +17,7 @@ Region chosen: **ap-south-1 (Mumbai)** — lowest latency for users in India.
 ## 1. Database (already done for this project)
 
 Project ref: `<your-project-ref>` (Project Settings → General). The schema is applied in
-fourteen migrations; this repository is deployed against a live project in `ap-south-1`, and
+fifteen migrations; this repository is deployed against a live project in `ap-south-1`, and
 the values below are the ones that project uses — swap in yours.
 
 | File | Contents |
@@ -36,6 +36,7 @@ the values below are the ones that project uses — swap in yours.
 | `0012_saved_items_and_searches.sql` | saved items, saved searches, the nightly match job |
 | `0013_retention_and_disposal.sql` | per-category retention, disposal queue, auditable dispositions |
 | `0014_audit_fixes.sql` | quarantine stub, anon revocations, message RLS, handover locking, retention guard, the pg_cron schedule |
+| `0015_audit_followups.sql` | approved-claim guards on status change and disposal, sequence revocation, seed dedupe |
 
 To rebuild from scratch on a new project, paste each file into the SQL editor in order, or:
 
@@ -124,9 +125,9 @@ select status, return_message, start_time from cron.job_run_details order by sta
 
 ## 6. What CI proves before you deploy
 
-Two jobs run on every push. `verify`: `npm run lint` → `typecheck` → `build` → a guardrail
-that fails if a private field name (`answer_hash`, `bin_code`, `finder_contact`) appears in
-the client bundle. `e2e`: builds against the local mock, then runs Playwright + axe at
+Two jobs run on every push. `verify`: `npm run lint` → `npm test` → `typecheck` → `build` → `smoke` → a
+guardrail that fails if a private field name (`answer_hash`, `bin_code`, `finder_contact`)
+appears in the client bundle or server render. `e2e`: builds against the local mock, then runs Playwright + axe at
 360/768/1440 — search, filter persistence, the privacy assertions on item detail, 360px
 overflow, the skip link, and zero critical or serious axe violations on five routes.
 

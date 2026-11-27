@@ -14,12 +14,16 @@ export async function decideClaim(_prev: StaffState, formData: FormData): Promis
   if (!isStaff(user)) return { ok: false, error: 'Staff access only.' };
 
   const claimRef = str(formData.get('claim_ref'));
+  const itemRef = str(formData.get('item_ref'));
   const decision = str(formData.get('decision'));
   const reason = clamp(str(formData.get('reason')), 300);
   if (decision === 'reject' && reason.length < 4) {
     return { ok: false, error: 'Write a short reason. The claimant sees it.' };
   }
 
+  // Only the write decides the result. Everything after it — the email, the
+  // cache refresh — must never turn a committed decision into "try again".
+  let result: { ok: boolean; error?: string; status?: string };
   try {
     const supabase = await supabaseServer();
     const { data, error } = await supabase.rpc('staff_decide_claim', {
@@ -28,40 +32,51 @@ export async function decideClaim(_prev: StaffState, formData: FormData): Promis
       p_reason: reason || null,
     });
     if (error) return { ok: false, error: 'Could not record that decision.' };
-    const result = data as { ok: boolean; error?: string; status?: string };
-    if (!result?.ok) return { ok: false, error: errorText(result?.error) };
-
-    if (decision !== 'review') {
-      const { data: claim } = await supabase
-        .from('claims')
-        .select('claimant_id, ref_code, items(title)')
-        .eq('ref_code', claimRef)
-        .maybeSingle();
-      const claimantId = (claim as { claimant_id?: string } | null)?.claimant_id;
-      if (claimantId) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('email')
-          .eq('id', claimantId)
-          .maybeSingle();
-        const email = (profile as { email?: string } | null)?.email;
-        if (email) {
-          await sendOrQueue({
-            to: email,
-            mail: templates.claimDecided(claimRef, decision === 'approve', reason || null),
-            eventType: 'claim_decided',
-            payload: { claimRef, approved: decision === 'approve', reason: reason || '' },
-            dedupeKey: `claim_decided:${claimRef}`,
-          });
-        }
-      }
-    }
-
-    revalidatePath('/staff');
-    revalidatePath('/staff/items/' + str(formData.get('item_ref')));
-    return { ok: true, message: decision === 'review' ? 'Moved to review.' : 'Decision recorded.' };
+    result = data as { ok: boolean; error?: string; status?: string };
   } catch {
     return { ok: false, error: 'Could not reach the desk. Try again.' };
+  }
+
+  if (!result?.ok) return { ok: false, error: errorText(result?.error) };
+
+  if (decision !== 'review') {
+    await notifyClaimant(claimRef, decision === 'approve', reason);
+  }
+
+  revalidatePath('/staff');
+  if (itemRef) revalidatePath('/staff/items/' + itemRef);
+  return { ok: true, message: decision === 'review' ? 'Moved to review.' : 'Decision recorded.' };
+}
+
+/** Best effort: a missing address or a refused email never fails the decision. */
+async function notifyClaimant(claimRef: string, approved: boolean, reason: string): Promise<void> {
+  try {
+    const supabase = await supabaseServer();
+    const { data: claim } = await supabase
+      .from('claims')
+      .select('claimant_id')
+      .eq('ref_code', claimRef)
+      .maybeSingle();
+    const claimantId = (claim as { claimant_id?: string } | null)?.claimant_id;
+    if (!claimantId) return;
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('email')
+      .eq('id', claimantId)
+      .maybeSingle();
+    const email = (profile as { email?: string } | null)?.email;
+    if (!email) return;
+
+    await sendOrQueue({
+      to: email,
+      mail: templates.claimDecided(claimRef, approved, reason || null),
+      eventType: 'claim_decided',
+      payload: { claimRef, approved, reason },
+      dedupeKey: `claim_decided:${claimRef}`,
+    });
+  } catch {
+    // the decision stands; the in-app notification is already written by the RPC
   }
 }
 
@@ -73,6 +88,7 @@ export async function confirmHandover(_prev: StaffState, formData: FormData): Pr
   const code = str(formData.get('code')).toUpperCase();
   const note = clamp(str(formData.get('note')), 300);
 
+  let result: { ok: boolean; error?: string };
   try {
     const supabase = await supabaseServer();
     const { data, error } = await supabase.rpc('staff_confirm_handover', {
@@ -81,31 +97,42 @@ export async function confirmHandover(_prev: StaffState, formData: FormData): Pr
       p_note: note || null,
     });
     if (error) return { ok: false, error: 'Could not confirm the handover.' };
-    const result = data as { ok: boolean; error?: string };
-    if (!result?.ok) return { ok: false, error: errorText(result?.error) };
+    result = data as { ok: boolean; error?: string };
+  } catch {
+    return { ok: false, error: 'Could not reach the desk. Try again.' };
+  }
 
+  if (!result?.ok) return { ok: false, error: errorText(result?.error) };
+
+  await thankFinder(itemRef);
+
+  revalidatePath('/staff');
+  revalidatePath('/staff/items/' + itemRef);
+  return { ok: true, message: 'Handover recorded. Item marked as returned.' };
+}
+
+/** Best effort, same rule as the decision email. */
+async function thankFinder(itemRef: string): Promise<void> {
+  try {
+    const supabase = await supabaseServer();
     const { data: item } = await supabase
       .from('items')
       .select('title, contact_email, finder_email')
       .eq('ref_code', itemRef)
       .maybeSingle();
-    const finderEmail = (item as { finder_email?: string; contact_email?: string; title?: string } | null);
-    const to = finderEmail?.finder_email || finderEmail?.contact_email;
-    if (to && finderEmail?.title) {
-      await sendOrQueue({
-        to,
-        mail: templates.finderThanks(itemRef, finderEmail.title),
-        eventType: 'finder_thanks',
-        payload: { ref: itemRef, title: finderEmail.title },
-        dedupeKey: `finder_thanks:${itemRef}`,
-      });
-    }
+    const row = item as { finder_email?: string; contact_email?: string; title?: string } | null;
+    const to = row?.finder_email || row?.contact_email;
+    if (!to || !row?.title) return;
 
-    revalidatePath('/staff');
-    revalidatePath('/staff/items/' + itemRef);
-    return { ok: true, message: 'Handover recorded. Item marked as returned.' };
+    await sendOrQueue({
+      to,
+      mail: templates.finderThanks(itemRef, row.title),
+      eventType: 'finder_thanks',
+      payload: { ref: itemRef, title: row.title },
+      dedupeKey: `finder_thanks:${itemRef}`,
+    });
   } catch {
-    return { ok: false, error: 'Could not reach the desk. Try again.' };
+    // the handover stands
   }
 }
 

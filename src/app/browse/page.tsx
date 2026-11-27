@@ -8,6 +8,7 @@ import { EmptyState } from '@/components/empty-state';
 import { CategoryIcon } from '@/components/category-icon';
 import { EMPTY } from '@/lib/copy';
 import { SaveSearchForm } from '@/components/save-controls';
+import { Banner } from '@/components/banner';
 import { currentUser } from '@/lib/data';
 
 export const dynamic = 'force-dynamic';
@@ -43,6 +44,7 @@ export default async function BrowsePage({ searchParams }: { searchParams: Param
   ]);
 
   const hasFilters = Boolean(q || type || category || zone || from || to || status);
+  const unreachable = result.ok === false;
 
   return (
     <>
@@ -59,6 +61,15 @@ export default async function BrowsePage({ searchParams }: { searchParams: Param
           Hand something in
         </Link>
       </div>
+
+      {unreachable ? (
+        <div style={{ marginBottom: 16 }}>
+          <Banner tone="warn" title="The board did not load">
+            This is not an empty board — the listings could not be fetched. Reload in a moment; if it keeps happening,
+            the desk can look up your reference directly.
+          </Banner>
+        </div>
+      ) : null}
 
       <FilterBar params={{ q, type, category, zone, from, to, status, sort }} zones={zoneList} />
 
@@ -83,7 +94,7 @@ export default async function BrowsePage({ searchParams }: { searchParams: Param
               params={{ q, type, category, zone, from, to, status, sort }}
             />
           </>
-        ) : hasFilters ? (
+        ) : unreachable ? null : hasFilters ? (
           <EmptyState
             icon={<CategoryIcon category="other" size={34} />}
             title={EMPTY.browseNone.title}

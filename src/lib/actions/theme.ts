@@ -18,6 +18,7 @@ export async function setTheme(formData: FormData): Promise<void> {
       maxAge: 60 * 60 * 24 * 365,
       sameSite: 'lax',
       httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
     });
   } else {
     store.delete('lnf-theme');

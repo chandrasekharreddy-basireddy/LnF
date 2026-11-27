@@ -41,9 +41,9 @@ export async function searchItems(params: SearchParams): Promise<SearchResult> {
     });
     if (error) throw error;
     const result = safe(data as SearchResult | null, { items: [], total: 0, limit, offset: 0 });
-    return { ...result, items: await attachCovers(result.items) };
+    return { ...result, items: await attachCovers(result.items), ok: true };
   } catch {
-    return { items: [], total: 0, limit, offset: 0 };
+    return { items: [], total: 0, limit, offset: 0, ok: false };
   }
 }
 
@@ -156,7 +156,7 @@ export async function currentUser(): Promise<SessionUser | null> {
     const supabase = await supabaseServer();
     const { data: auth } = await supabase.auth.getUser();
     if (!auth?.user) return null;
-    const [{ data: roles }, { data: profile }] = await Promise.all([
+    const [{ data: roles, error: rolesError }, { data: profile }] = await Promise.all([
       supabase.from('user_roles').select('role').eq('user_id', auth.user.id),
       supabase
         .from('profiles')
@@ -172,6 +172,7 @@ export async function currentUser(): Promise<SessionUser | null> {
       alertsOptIn: Boolean(profile?.alerts_opt_in),
       phone: (profile?.phone as string | null) ?? null,
       marketingOptIn: Boolean(profile?.marketing_opt_in),
+      roleCheckFailed: Boolean(rolesError),
     };
   } catch {
     return null;

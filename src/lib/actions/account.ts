@@ -18,11 +18,16 @@ export async function saveProfile(_prev: AccountState, formData: FormData): Prom
 
   try {
     const supabase = await supabaseServer();
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('profiles')
       .update({ full_name: name || null, phone: phone || null, alerts_opt_in: alerts, marketing_opt_in: marketing })
-      .eq('id', user.id);
+      .eq('id', user.id)
+      .select('id');
     if (error) return { ok: false, error: 'Could not save your details.' };
+    // an update that matched no row is a failure, not a silent success
+    if (!data || data.length === 0) {
+      return { ok: false, error: 'Your profile could not be found. Sign out and in again.' };
+    }
     revalidatePath('/account');
     return { ok: true, message: 'Saved.' };
   } catch {

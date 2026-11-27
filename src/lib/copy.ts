@@ -57,6 +57,7 @@ export const ERRORS: Record<string, string> = {
   NOTE_REQUIRED: 'Write a short note. The audit log needs a reason.',
   ALREADY_DISPOSED: 'This item already has a disposition recorded.',
   ALREADY_RETURNED: 'This item was returned to its owner, so it cannot be disposed of.',
+  HAS_APPROVED_CLAIM: 'An approved claim is waiting to be collected. Confirm or withdraw it before archiving or disposing of the item.',
 };
 
 export function errorText(code: string | undefined): string {

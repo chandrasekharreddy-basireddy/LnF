@@ -72,15 +72,15 @@ export const templates = {
     tag: 'item-published',
   }),
 
-  claimReceived: (claimRef: string, itemTitle: string) => ({
+  claimReceived: (claimRef: string, itemRef: string) => ({
     subject: `Claim received: ${claimRef}`,
     html: wrap(
       'Your claim is with the desk',
-      `<p>Claim <strong>${esc(claimRef)}</strong> for <strong>${esc(itemTitle)}</strong> was received.</p>
+      `<p>Claim <strong>${esc(claimRef)}</strong> for item <strong>${esc(itemRef)}</strong> was received.</p>
        <p>The desk reviews claims within two working days. You will get another email when there is a decision.</p>`,
       { label: 'Track this claim', href: `${env.siteUrl}/claims/${esc(claimRef)}` },
     ),
-    text: `Claim ${claimRef} received for ${itemTitle}. Track it at ${env.siteUrl}/claims/${claimRef}`,
+    text: `Claim ${claimRef} received for item ${itemRef}. Track it at ${env.siteUrl}/claims/${claimRef}`,
     tag: 'claim-received',
   }),
 

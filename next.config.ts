@@ -2,10 +2,23 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  experimental: {
+    serverActions: {
+      // phone photos are 2-4 MB; the default 1 MB rejects them before the
+      // action runs, with an error nobody can act on
+      bodySizeLimit: '6mb',
+    },
+  },
   reactStrictMode: true,
   serverExternalPackages: ['sharp'],
   async headers() {
     return [
+      {
+        // non-HTML responses (sitemap, robots, manifest) get a locked-down
+        // baseline; pages get the nonce policy from src/proxy.ts
+        source: '/:path*.xml',
+        headers: [{ key: 'Content-Security-Policy', value: "default-src 'none'; style-src 'unsafe-inline'" }],
+      },
       {
         source: '/:path*',
         headers: [

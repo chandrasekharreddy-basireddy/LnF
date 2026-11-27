@@ -9,13 +9,14 @@ type Status = 'idle' | 'starting' | 'scanning' | 'unsupported' | 'denied';
 
 /** Pull the reference or claim code out of whatever the tag encodes. */
 export function extractCode(raw: string): string | null {
-  const trimmed = raw.trim();
-  const item = trimmed.match(/LF-\d{4}-\d{4}/i);
-  if (item) return item[0].toUpperCase();
-  const claim = trimmed.match(/CLM-\d{4}-\d{4}/i);
-  if (claim) return claim[0].toUpperCase();
-  const handover = trimmed.match(/\b[2-9A-HJ-NP-Z]{6}\b/);
-  if (handover) return handover[0].toUpperCase();
+  // A typed code is usually lower-case; a scanned one is already upper.
+  const upper = raw.trim().toUpperCase();
+  const item = upper.match(/LF-\d{4}-\d{4}/);
+  if (item) return item[0];
+  const claim = upper.match(/CLM-\d{4}-\d{4}/);
+  if (claim) return claim[0];
+  const handover = upper.match(/\b[2-9A-HJ-NP-Z]{6}\b/);
+  if (handover) return handover[0];
   return null;
 }
 

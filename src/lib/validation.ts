@@ -35,15 +35,26 @@ export function isValidDate(value: string): boolean {
  */
 export function safeInternalPath(next: string | null | undefined, fallback = '/account'): string {
   if (!next) return fallback;
+
   // The URL parser deletes TAB/LF/CR before resolving, so "/<TAB>/evil.com"
   // would otherwise become "//evil.com" and leave the origin.
   const cleaned = Array.from(next)
     .filter((char) => char.charCodeAt(0) > 31 && char.charCodeAt(0) !== 127)
     .join('');
-  if (!cleaned.startsWith('/')) return fallback;
-  if (cleaned.startsWith('//')) return fallback;
-  if (cleaned.includes('\\')) return fallback;
-  return cleaned;
+
+  if (!cleaned.startsWith('/') || cleaned.startsWith('//') || cleaned.includes('\\')) return fallback;
+
+  // Resolve against a throwaway origin and keep only the path: ".." segments
+  // can turn "/ok//../..//evil.com" into "//evil.com", which is still our
+  // origin but not a page.
+  try {
+    const resolved = new URL(cleaned, 'http://lnf.invalid');
+    if (resolved.origin !== 'http://lnf.invalid') return fallback;
+    if (resolved.pathname.startsWith('//')) return fallback;
+    return `${resolved.pathname}${resolved.search}${resolved.hash}`;
+  } catch {
+    return fallback;
+  }
 }
 
 export function refLooksValid(ref: string): boolean {

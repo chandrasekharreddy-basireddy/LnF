@@ -14,6 +14,19 @@ export default async function StaffPage() {
   const user = await currentUser();
   if (!user) redirect('/sign-in?next=/staff');
   if (!isStaff(user)) {
+    if (user.roleCheckFailed) {
+      return (
+        <div className="section" style={{ maxWidth: 520 }}>
+          <h1>We could not check your access</h1>
+          <p className="lede">
+            The role lookup failed, so this is not a refusal — your staff access may well be fine. Reload in a moment.
+          </p>
+          <Link className="btn" href="/staff">
+            Try again
+          </Link>
+        </div>
+      );
+    }
     return (
       <div className="section" style={{ maxWidth: 520 }}>
         <h1>Desk access only</h1>

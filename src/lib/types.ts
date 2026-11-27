@@ -35,7 +35,14 @@ export type PublicItem = {
 export type Photo = { path: string; alt: string; width: number | null; height: number | null };
 export type SignedPhoto = { url: string; alt: string; width: number | null; height: number | null };
 
-export type SearchResult = { items: PublicItem[]; total: number; limit: number; offset: number };
+export type SearchResult = {
+  items: PublicItem[];
+  total: number;
+  limit: number;
+  offset: number;
+  /** false when the board could not be reached — an empty list is not the same thing */
+  ok?: boolean;
+};
 
 export type BoardStats = {
   open_found: number;
@@ -53,6 +60,8 @@ export type SessionUser = {
   alertsOptIn: boolean;
   phone?: string | null;
   marketingOptIn?: boolean;
+  /** true when the role lookup failed, so "no access" may be wrong */
+  roleCheckFailed?: boolean;
 };
 
 export type ClaimSummary = {

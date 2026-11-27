@@ -16,8 +16,12 @@ export default async function AdminPage() {
   if (!isAdmin(user)) {
     return (
       <div className="section" style={{ maxWidth: 520 }}>
-        <h1>Admin only</h1>
-        <p className="lede">Your account does not have the admin role.</p>
+        <h1>{user.roleCheckFailed ? 'We could not check your access' : 'Admin only'}</h1>
+        <p className="lede">
+          {user.roleCheckFailed
+            ? 'The role lookup failed, so this is not a refusal. Reload in a moment.'
+            : 'Your account does not have the admin role.'}
+        </p>
         <Link className="btn" href="/">
           Back to the board
         </Link>
