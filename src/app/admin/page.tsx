@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { adminMetrics, currentUser, isAdmin, openReports } from '@/lib/data';
+import { adminMetrics, currentUser, isAdmin, keyRotationDays, lastOpsReview, openReports, verifyAuditChain } from '@/lib/data';
 import { RoleForm, PurgeSamples } from '@/components/admin-role-form';
 import { CloseReportForm } from '@/components/staff-actions';
+import { ReviewForm } from '@/components/review-form';
 import { Banner } from '@/components/banner';
-import { formatDateTime } from '@/lib/validation';
+import { formatDate, formatDateTime } from '@/lib/validation';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Admin', robots: { index: false, follow: false } };
@@ -29,7 +30,13 @@ export default async function AdminPage() {
     );
   }
 
-  const [metrics, reports] = await Promise.all([adminMetrics(), openReports()]);
+  const [metrics, reports, chain, review] = await Promise.all([
+    adminMetrics(),
+    openReports(),
+    verifyAuditChain(),
+    lastOpsReview(),
+  ]);
+  const rotationDays = keyRotationDays();
   const rate = metrics?.cohort60d.rate;
 
   return (
@@ -155,6 +162,58 @@ export default async function AdminPage() {
         </div>
 
         <aside className="stack">
+          <div className="panel">
+            <div className="panel-head">
+              <strong>Oversight</strong>
+            </div>
+            <div className="panel-body stack">
+              <div>
+                <p className="small" style={{ marginBottom: 4 }}>
+                  <strong>Audit chain</strong>
+                </p>
+                <p className="small muted">
+                  {chain === null
+                    ? 'Could not check the chain right now.'
+                    : chain.ok
+                      ? `Intact across ${chain.checked ?? 0} entries. Every row carries the hash of the one before it.`
+                      : `Broken at entry ${chain.brokenAt ?? '?'}. Someone edited or deleted history — export the log and investigate before trusting it.`}
+                </p>
+                <span className={`chip ${chain?.ok ? 'chip-ok' : 'chip-danger'}`}>
+                  {chain?.ok ? 'chain intact' : 'chain broken'}
+                </span>
+              </div>
+
+              <hr className="divider" style={{ margin: '4px 0' }} />
+
+              <div>
+                <p className="small" style={{ marginBottom: 4 }}>
+                  <strong>Weekly review</strong>
+                </p>
+                <p className="small muted">
+                  {review
+                    ? `Last recorded for the week of ${formatDate(review.week_of)}${review.notes ? ` — ${review.notes}` : ''}`
+                    : 'Never recorded. The numbers below are worth ten minutes a week with a name against them.'}
+                </p>
+                <ReviewForm />
+              </div>
+
+              <hr className="divider" style={{ margin: '4px 0' }} />
+
+              <div className="small muted">
+                <p style={{ marginBottom: 4 }}>
+                  <strong style={{ color: 'var(--ink)' }}>Keys and backups</strong>
+                </p>
+                <p>
+                  Service-role key: {process.env.SUPABASE_SERVICE_ROLE_KEY ? 'configured' : 'not set (photo cleanup and email retries are off)'}.
+                  {rotationDays !== null ? ` Rotated ${rotationDays} days ago.` : ' No rotation date recorded — set KEY_ROTATED_AT when you rotate.'}
+                </p>
+                <p>
+                  Weekly <code className="mono">pg_dump</code> runs in the backup workflow; the artefact is the copy you hold outside Supabase.
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="panel">
             <div className="panel-head">
               <strong>Grant a role</strong>

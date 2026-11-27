@@ -57,6 +57,9 @@ export const ERRORS: Record<string, string> = {
   NOTE_REQUIRED: 'Write a short note. The audit log needs a reason.',
   ALREADY_DISPOSED: 'This item already has a disposition recorded.',
   ALREADY_RETURNED: 'This item was returned to its owner, so it cannot be disposed of.',
+  WITNESS_REQUIRED: 'This category is released by two people. Choose the staff member who is countersigning.',
+  WITNESS_IS_SELF: 'You cannot countersign your own handover.',
+  WITNESS_NOT_STAFF: 'That account is not staff. Pick a staff member from the list.',
   HAS_APPROVED_CLAIM: 'An approved claim is waiting to be collected. Confirm or withdraw it before archiving or disposing of the item.',
 };
 

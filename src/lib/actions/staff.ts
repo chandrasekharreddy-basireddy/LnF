@@ -87,6 +87,7 @@ export async function confirmHandover(_prev: StaffState, formData: FormData): Pr
   const itemRef = str(formData.get('item_ref'));
   const code = str(formData.get('code')).toUpperCase();
   const note = clamp(str(formData.get('note')), 300);
+  const witness = str(formData.get('witness')) || null;
 
   let result: { ok: boolean; error?: string };
   try {
@@ -95,6 +96,7 @@ export async function confirmHandover(_prev: StaffState, formData: FormData): Pr
       p_item_ref: itemRef,
       p_code: code || null,
       p_note: note || null,
+      p_witness: witness,
     });
     if (error) return { ok: false, error: 'Could not confirm the handover.' };
     result = data as { ok: boolean; error?: string };

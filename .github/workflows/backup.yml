@@ -1,0 +1,39 @@
+name: Backup
+
+# The free plan has no point-in-time recovery. This is the copy you hold.
+on:
+  schedule:
+    - cron: '0 3 * * 0'   # Sunday 03:00 UTC
+  workflow_dispatch:
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install the Postgres client
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+
+      - name: Dump the database
+        env:
+          # Supabase → Project Settings → Database → Connection string (URI).
+          # Store it as the repository secret SUPABASE_DB_URL.
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "SUPABASE_DB_URL is not set — nothing to back up"; exit 1
+          fi
+          mkdir -p backup
+          stamp=$(date -u +%Y-%m-%d)
+          # schema and data, no owner statements (the roles do not exist elsewhere)
+          pg_dump "$SUPABASE_DB_URL" --no-owner --no-privileges --clean --if-exists \
+            | gzip > "backup/lnf-${stamp}.sql.gz"
+          ls -lh backup/
+          # fail loudly on an empty or truncated dump rather than storing it
+          test -s "backup/lnf-${stamp}.sql.gz"
+          gunzip -c "backup/lnf-${stamp}.sql.gz" | grep -q "CREATE TABLE public.items"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lnf-backup-${{ github.run_id }}
+          path: backup/*.sql.gz
+          retention-days: 90

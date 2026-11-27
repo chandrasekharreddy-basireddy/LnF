@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
-import { currentUser, isStaff, staffItem } from '@/lib/data';
+import { currentUser, isStaff, retentionPolicies, staffDirectory, staffItem } from '@/lib/data';
 import { ClaimDecision, HandoverForm, ItemStatusForm } from '@/components/staff-actions';
 import { MessageForm } from '@/components/message-form';
 import { StatusChip } from '@/components/status-chip';
@@ -21,6 +21,11 @@ export default async function StaffItemPage({ params }: { params: Promise<{ ref:
   if (!detail) notFound();
 
   const { item, private: priv, claims, history, contactEmail } = detail;
+
+  const [policies, directory] = await Promise.all([retentionPolicies(), staffDirectory()]);
+  const requiresWitness = Boolean(
+    policies.find((policy) => policy.category === item.category)?.requires_photo_id,
+  );
 
   return (
     <div className="section" style={{ marginTop: 8 }}>
@@ -104,7 +109,7 @@ export default async function StaffItemPage({ params }: { params: Promise<{ ref:
               {item.status === 'recovered' ? (
                 <p className="small muted">This item is already recorded as returned.</p>
               ) : claims.some((c) => c.status === 'approved') ? (
-                <HandoverForm itemRef={item.ref} />
+                <HandoverForm itemRef={item.ref} requiresWitness={requiresWitness} staff={directory} />
               ) : (
                 <p className="small muted">
                   Approve a claim first. An item is only released against an approved claim.

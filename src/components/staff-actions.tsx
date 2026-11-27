@@ -45,11 +45,38 @@ export function ClaimDecision({ claimRef, itemRef, status }: { claimRef: string;
   );
 }
 
-export function HandoverForm({ itemRef }: { itemRef: string }) {
+export function HandoverForm({
+  itemRef,
+  requiresWitness = false,
+  staff = [],
+}: {
+  itemRef: string;
+  requiresWitness?: boolean;
+  staff?: { id: string; name: string }[];
+}) {
   const [state, action] = useActionState(confirmHandover, initial);
   return (
     <form className="form" action={action}>
       <input type="hidden" name="item_ref" value={itemRef} />
+      {requiresWitness ? (
+        <div className="field">
+          <label htmlFor="witness">Countersigned by</label>
+          <select id="witness" name="witness" required defaultValue="">
+            <option value="" disabled>
+              Choose a staff member
+            </option>
+            {staff.map((member) => (
+              <option key={member.id} value={member.id}>
+                {member.name}
+              </option>
+            ))}
+          </select>
+          <p className="hint">
+            High-value categories are released by two people, and both are recorded in the audit log. You cannot
+            countersign your own handover.
+          </p>
+        </div>
+      ) : null}
       {state.error ? <Banner tone="danger">{state.error}</Banner> : null}
       {state.message ? <Banner tone="ok">{state.message}</Banner> : null}
       <div className="field">

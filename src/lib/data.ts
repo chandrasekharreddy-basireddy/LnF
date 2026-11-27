@@ -236,6 +236,50 @@ export async function claimThread(ref: string): Promise<ClaimThread | null> {
   }
 }
 
+/** Days since the service-role key was last rotated, from KEY_ROTATED_AT. */
+export function keyRotationDays(): number | null {
+  const stamp = process.env.KEY_ROTATED_AT;
+  if (!stamp) return null;
+  const then = new Date(stamp).getTime();
+  if (Number.isNaN(then)) return null;
+  return Math.floor((Date.now() - then) / 86_400_000);
+}
+
+export async function staffDirectory(): Promise<{ id: string; name: string }[]> {
+  try {
+    const supabase = await supabaseServer();
+    const { data } = await supabase.rpc('staff_directory');
+    return (data ?? []) as { id: string; name: string }[];
+  } catch {
+    return [];
+  }
+}
+
+export async function verifyAuditChain(): Promise<{ ok: boolean; checked?: number; brokenAt?: number; error?: string } | null> {
+  try {
+    const supabase = await supabaseServer();
+    const { data } = await supabase.rpc('verify_audit_chain', { p_limit: 5000 });
+    return (data as { ok: boolean } | null) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export async function lastOpsReview() {
+  try {
+    const supabase = await supabaseServer();
+    const { data } = await supabase
+      .from('ops_reviews')
+      .select('week_of, reviewed_by, notes, created_at')
+      .order('week_of', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    return (data as { week_of: string; reviewed_by: string | null; notes: string | null; created_at: string } | null) ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function disposalQueue() {
   try {
     const supabase = await supabaseServer();

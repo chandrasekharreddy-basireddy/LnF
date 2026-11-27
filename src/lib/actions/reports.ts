@@ -90,7 +90,9 @@ export async function createReport(_prev: ReportState, formData: FormData): Prom
 
   revalidatePath('/browse');
   revalidatePath('/');
-  redirect(`/items/${ref}?posted=1`);
+  // A quarantined or first-time listing is not public, so its own page would
+  // 404. Send the reporter somewhere that explains the state instead.
+  redirect(status === 'available' ? `/items/${ref}?posted=1` : `/report/success?ref=${ref}&state=${status}`);
 }
 
 export type ListingReportState = { ok: boolean; error?: string; done?: boolean };
