@@ -47,6 +47,11 @@ export function CommandPalette({ staff = false }: { staff?: boolean }) {
   }, []);
 
   useEffect(() => {
+    // signals that client handlers are attached; the e2e suite waits for it
+    document.documentElement.dataset.hydrated = 'true';
+  }, []);
+
+  useEffect(() => {
     if (open) inputRef.current?.focus();
   }, [open]);
 

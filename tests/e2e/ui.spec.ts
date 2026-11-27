@@ -15,6 +15,8 @@ test.describe('interface', () => {
 
   test('command palette opens with Control+K and closes with Escape', async ({ page }) => {
     await page.goto('/');
+    // the shortcut is a client handler: wait for hydration rather than race it
+    await page.waitForFunction(() => document.documentElement.dataset.hydrated === 'true');
     await page.keyboard.press('Control+k');
     await expect(page.getByRole('dialog', { name: 'Quick search' })).toBeVisible();
     await page.keyboard.press('Escape');
