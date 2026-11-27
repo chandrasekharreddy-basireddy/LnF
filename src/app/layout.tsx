@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { cookies } from 'next/headers';
 import { SiteFooter, SiteHeader } from '@/components/site-header';
-import { currentUser } from '@/lib/data';
+import { currentUser, unreadMessages } from '@/lib/data';
 import { env } from '@/lib/env';
 
 export const metadata: Metadata = {
@@ -47,7 +47,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <a className="skip" href="#main">
           Skip to content
         </a>
-        <SiteHeader user={user} />
+        <SiteHeader user={user} unread={user ? await unreadMessages() : 0} />
         <main id="main">
           <div className="wrap">{children}</div>
         </main>

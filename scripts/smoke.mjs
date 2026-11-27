@@ -178,7 +178,7 @@ try {
 
   const staff = await get(BASE + '/staff', { redirect: 'manual' });
   log('CHECK /staff unauthenticated ->', staff.status, staff.headers.get('location'));
-  for (const guarded of ['/staff/scan', '/staff/disposal', '/staff/items/LF-2026-0007/label', '/account/saved']) {
+  for (const guarded of ['/staff/scan', '/staff/disposal', '/staff/items/LF-2026-0007/label', '/account/saved', '/messages', '/messages/CLM-2026-0001']) {
     const res = await get(BASE + guarded, { redirect: 'manual' });
     const loc = res.headers.get('location') ?? '';
     const body = await res.text();

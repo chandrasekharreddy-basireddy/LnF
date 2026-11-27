@@ -49,3 +49,43 @@ export async function postMessage(_prev: MessageState, formData: FormData): Prom
     return { ok: false, error: 'Could not reach the board. Try again.' };
   }
 }
+
+
+export type ThreadSnapshot = {
+  ok: boolean;
+  messages: { id: string; body: string; role: string; mine: boolean; kind: string; at: string }[];
+  locked: boolean;
+  lockReason: string | null;
+  error?: string;
+};
+
+/** Polling fallback for browsers where Realtime cannot authenticate. */
+export async function fetchThread(claimRef: string): Promise<ThreadSnapshot> {
+  try {
+    const supabase = await supabaseServer();
+    const { data } = await supabase.rpc('claim_thread', { p_claim_ref: claimRef });
+    const thread = data as {
+      messages?: ThreadSnapshot['messages'];
+      locked?: boolean;
+      lockReason?: string | null;
+    } | null;
+    if (!thread) return { ok: false, messages: [], locked: true, lockReason: null, error: 'NO_THREAD' };
+    return {
+      ok: true,
+      messages: thread.messages ?? [],
+      locked: Boolean(thread.locked),
+      lockReason: thread.lockReason ?? null,
+    };
+  } catch {
+    return { ok: false, messages: [], locked: false, lockReason: null, error: 'UNREACHABLE' };
+  }
+}
+
+export async function markThreadRead(claimRef: string): Promise<void> {
+  try {
+    const supabase = await supabaseServer();
+    await supabase.rpc('mark_thread_read', { p_claim_ref: claimRef });
+  } catch {
+    // an unread badge is not worth failing a page for
+  }
+}

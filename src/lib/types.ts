@@ -95,19 +95,42 @@ export type ClaimDetail = {
 
 export type ActionResult = { ok: boolean; error?: string; message?: string; ref?: string };
 
+export type Conversation = {
+  claimRef: string;
+  claimId: string;
+  itemRef: string;
+  itemTitle: string;
+  claimStatus: string;
+  itemStatus: string;
+  myRole: 'claimant' | 'finder' | 'staff';
+  lastMessage: string | null;
+  lastAt: string;
+  unread: number;
+  locked: boolean;
+};
+
 export type ClaimMessage = {
   id: string;
   body: string;
   role: 'claimant' | 'finder' | 'staff';
   mine: boolean;
+  kind: 'text' | 'system';
   quarantined: boolean;
   flaggedReason: string | null;
   at: string;
 };
 
 export type ClaimThread = {
+  claimRef: string;
+  claimId: string;
+  itemRef: string;
+  itemTitle: string;
+  itemStatus: string;
+  claimStatus: string;
   role: 'claimant' | 'finder' | 'staff';
   locked: boolean;
   lockReason: string | null;
+  counterparty: string;
+  unread: number;
   messages: ClaimMessage[];
 };

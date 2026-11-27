@@ -5,7 +5,7 @@ import { isStaff } from '@/lib/data';
 import { ThemeFlip } from './theme-flip';
 import { CommandPalette } from './command-palette';
 
-export function SiteHeader({ user }: { user: SessionUser | null }) {
+export function SiteHeader({ user, unread = 0 }: { user: SessionUser | null; unread?: number }) {
   return (
     <header className="site-header">
       <div className="wrap header-row">
@@ -24,6 +24,12 @@ export function SiteHeader({ user }: { user: SessionUser | null }) {
           <Link href="/report/lost">I lost something</Link>
           <Link href="/report/found">I found something</Link>
           <Link href="/safety">Safety</Link>
+          {user ? (
+            <Link href="/messages">
+              Messages
+              {unread > 0 ? <span className="chip chip-ok" style={{ marginLeft: 6 }}>{unread}</span> : null}
+            </Link>
+          ) : null}
           {isStaff(user) ? <Link href="/staff">Desk</Link> : null}
           {user?.roles.includes('admin') ? <Link href="/admin">Admin</Link> : null}
           {user ? (

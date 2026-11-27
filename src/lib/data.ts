@@ -1,6 +1,6 @@
 import { supabaseServer } from './supabase-server';
 import type {
-  BoardStats, ClaimDetail, ClaimSummary, ClaimThread, Photo, PublicItem, SearchResult, SessionUser, SignedPhoto,
+  BoardStats, ClaimDetail, ClaimSummary, ClaimThread, Conversation, Photo, PublicItem, SearchResult, SessionUser, SignedPhoto,
 } from './types';
 
 export type SearchParams = {
@@ -243,6 +243,22 @@ export function keyRotationDays(): number | null {
   const then = new Date(stamp).getTime();
   if (Number.isNaN(then)) return null;
   return Math.floor((Date.now() - then) / 86_400_000);
+}
+
+export async function myConversations(): Promise<Conversation[]> {
+  try {
+    const supabase = await supabaseServer();
+    const { data, error } = await supabase.rpc('my_conversations');
+    if (error) return [];
+    return (data ?? []) as Conversation[];
+  } catch {
+    return [];
+  }
+}
+
+export async function unreadMessages(): Promise<number> {
+  const threads = await myConversations();
+  return threads.reduce((sum, thread) => sum + Number(thread.unread ?? 0), 0);
 }
 
 export async function staffDirectory(): Promise<{ id: string; name: string }[]> {
