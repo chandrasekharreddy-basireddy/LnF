@@ -3,7 +3,7 @@
  * actually returned. Run with: node scripts/smoke.mjs
  */
 import { spawn } from 'node:child_process';
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync } from 'node:fs';
 import { setTimeout as sleep } from 'node:timers/promises';
 import net from 'node:net';
 import path from 'node:path';
@@ -51,7 +51,11 @@ const log = (...a) => {
   if (line.includes('CHECK') && line.includes('false')) failures += 1;
   out.push(line);
   try {
+    try {
     writeFileSync('/tmp/smoke.txt', out.join('\n') + '\n');
+  } catch {
+    // the transcript is a convenience; stdout already carries it
+  }
   } catch {}
 };
 
@@ -213,13 +217,16 @@ try {
   log(failures === 0 ? 'RESULT: all checks passed' : `RESULT: ${failures} CHECK(S) FAILED`);
   log('SERVER ERRORS:', (serverLog.match(/(Error|error)[^\n]{0,160}/g) ?? []).slice(0, 6).join(' || ') || 'none');
 
-  mkdirSync('/scratch/work/shots', { recursive: true });
 } catch (err) {
   failures += 1;
   log('SMOKE FAILED ' + String(err));
   log(serverLog.slice(-3000));
 } finally {
-  writeFileSync('/tmp/smoke.txt', out.join('\n') + '\n');
+  try {
+    writeFileSync('/tmp/smoke.txt', out.join('\n') + '\n');
+  } catch {
+    // the transcript is a convenience; stdout already carries it
+  }
   // print, so CI and a human both see it — and fail, so it is a gate
   process.stdout.write(out.join('\n') + '\n');
   child.kill('SIGTERM');
