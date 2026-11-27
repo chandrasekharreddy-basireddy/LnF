@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { currentUser } from '@/lib/data';
 import { SignInForm } from '@/components/sign-in-form';
+import { safeInternalPath } from '@/lib/validation';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Sign in', robots: { index: false, follow: false } };
@@ -16,7 +17,8 @@ export default async function SignInPage({
   if (user) redirect('/account');
 
   const sp = await searchParams;
-  const next = typeof sp.next === 'string' && sp.next.startsWith('/') ? sp.next : '/account';
+  // the same guard the action uses: a tab or a "//host" must not survive here
+  const next = safeInternalPath(typeof sp.next === 'string' ? sp.next : null);
 
   return (
     <div className="section" style={{ marginTop: 8, maxWidth: 460 }}>

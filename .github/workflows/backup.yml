@@ -18,22 +18,29 @@ jobs:
           # Supabase → Project Settings → Database → Connection string (URI).
           # Store it as the repository secret SUPABASE_DB_URL.
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          BACKUP_AGE_RECIPIENT: ${{ secrets.BACKUP_AGE_RECIPIENT }}
         run: |
           if [ -z "$SUPABASE_DB_URL" ]; then
             echo "SUPABASE_DB_URL is not set — nothing to back up"; exit 1
           fi
+          set -euo pipefail
+          if [ -z "${BACKUP_AGE_RECIPIENT:-}" ]; then
+            echo "BACKUP_AGE_RECIPIENT is not set — refusing to store an unencrypted dump"; exit 1
+          fi
+          sudo apt-get install -y -qq age
           mkdir -p backup
           stamp=$(date -u +%Y-%m-%d)
-          # schema and data, no owner statements (the roles do not exist elsewhere)
+          # public schema only: roles and extensions are project-level, not data
           pg_dump "$SUPABASE_DB_URL" --no-owner --no-privileges --clean --if-exists \
-            | gzip > "backup/lnf-${stamp}.sql.gz"
-          ls -lh backup/
-          # fail loudly on an empty or truncated dump rather than storing it
-          test -s "backup/lnf-${stamp}.sql.gz"
+            --schema=public | gzip > "backup/lnf-${stamp}.sql.gz"
+          # prove it is a real dump before encrypting it
           gunzip -c "backup/lnf-${stamp}.sql.gz" | grep -q "CREATE TABLE public.items"
+          age -r "$BACKUP_AGE_RECIPIENT" -o "backup/lnf-${stamp}.sql.gz.age" "backup/lnf-${stamp}.sql.gz"
+          shred -u "backup/lnf-${stamp}.sql.gz" 2>/dev/null || rm -f "backup/lnf-${stamp}.sql.gz"
+          ls -lh backup/
 
       - uses: actions/upload-artifact@v4
         with:
           name: lnf-backup-${{ github.run_id }}
-          path: backup/*.sql.gz
-          retention-days: 90
+          path: backup/*.sql.gz.age
+          retention-days: 14

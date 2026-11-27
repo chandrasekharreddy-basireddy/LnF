@@ -56,7 +56,17 @@ export function ScanConsole() {
       setStatus('starting');
       try {
         stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-        if (cancelled || !videoRef.current) return;
+        // the permission prompt can outlive the page: never leak the camera
+        if (cancelled) {
+          stream.getTracks().forEach((track) => track.stop());
+          stream = null;
+          return;
+        }
+        if (!videoRef.current) {
+          stream.getTracks().forEach((track) => track.stop());
+          stream = null;
+          return;
+        }
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
         setStatus('scanning');

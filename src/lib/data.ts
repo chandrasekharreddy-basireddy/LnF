@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { supabaseServer } from './supabase-server';
 import type {
   BoardStats, ClaimDetail, ClaimSummary, ClaimThread, Conversation, Photo, PublicItem, SearchResult, SessionUser, SignedPhoto,
@@ -90,7 +91,7 @@ export async function signPhotos(photos: Photo[]): Promise<SignedPhoto[]> {
   }
 }
 
-export async function getItem(ref: string): Promise<{ item: PublicItem; photos: SignedPhoto[] } | null> {
+export const getItem = cache(async function getItem(ref: string): Promise<{ item: PublicItem; photos: SignedPhoto[] } | null> {
   try {
     const supabase = await supabaseServer();
     const { data, error } = await supabase.rpc('get_public_item', { p_ref: ref });
@@ -127,7 +128,7 @@ export async function getItem(ref: string): Promise<{ item: PublicItem; photos: 
   } catch {
     return null;
   }
-}
+});
 
 /** Returns null when the board cannot be reached, so callers can tell "zero" from "unknown". */
 export async function boardStats(): Promise<BoardStats | null> {
@@ -141,7 +142,7 @@ export async function boardStats(): Promise<BoardStats | null> {
   }
 }
 
-export async function zones(): Promise<{ code: string; name: string }[]> {
+export const zones = cache(async function zones(): Promise<{ code: string; name: string }[]> {
   try {
     const supabase = await supabaseServer();
     const { data } = await supabase.from('public_zones').select('code,name,sort_order');
@@ -149,9 +150,9 @@ export async function zones(): Promise<{ code: string; name: string }[]> {
   } catch {
     return [];
   }
-}
+});
 
-export async function currentUser(): Promise<SessionUser | null> {
+export const currentUser = cache(async function currentUser(): Promise<SessionUser | null> {
   try {
     const supabase = await supabaseServer();
     const { data: auth } = await supabase.auth.getUser();
@@ -177,7 +178,7 @@ export async function currentUser(): Promise<SessionUser | null> {
   } catch {
     return null;
   }
-}
+});
 
 export function isStaff(user: SessionUser | null): boolean {
   return Boolean(user && (user.roles.includes('staff') || user.roles.includes('admin')));
@@ -310,7 +311,7 @@ export async function disposalQueue() {
   }
 }
 
-export async function retentionPolicies() {
+export const retentionPolicies = cache(async function retentionPolicies() {
   try {
     const supabase = await supabaseServer();
     const { data } = await supabase
@@ -324,7 +325,7 @@ export async function retentionPolicies() {
   } catch {
     return [];
   }
-}
+});
 
 export async function mySavedItems(): Promise<PublicItem[]> {
   try {

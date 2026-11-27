@@ -30,13 +30,13 @@ export function ClaimDecision({ claimRef, itemRef, status }: { claimRef: string;
       </div>
 
       <div className="row">
-        <SubmitButton className="btn btn-sm" name="decision" value="approve" pendingLabel="Saving…">
+        <SubmitButton className="btn btn-sm" name="decision" value="approve" pendingLabel="Saving…" disabled={decided}>
           Approve
         </SubmitButton>
-        <SubmitButton className="btn btn-secondary btn-sm" name="decision" value="review" pendingLabel="Saving…">
+        <SubmitButton className="btn btn-secondary btn-sm" name="decision" value="review" pendingLabel="Saving…" disabled={decided}>
           Move to review
         </SubmitButton>
-        <SubmitButton className="btn btn-danger btn-sm" name="decision" value="reject" pendingLabel="Saving…">
+        <SubmitButton className="btn btn-danger btn-sm" name="decision" value="reject" pendingLabel="Saving…" disabled={decided}>
           Reject
         </SubmitButton>
       </div>

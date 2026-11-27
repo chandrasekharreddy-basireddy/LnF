@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 import { saveProfile, requestDeletion, type AccountState } from '@/lib/actions/account';
 import { SubmitButton } from './submit-button';
 import { Banner } from './banner';
@@ -47,17 +47,39 @@ export function AccountForm({
 
 export function DeleteAccount() {
   const [state, action] = useActionState(requestDeletion, initial);
+  const [confirming, setConfirming] = useState(false);
+
+  if (state.ok) {
+    return <Banner tone="ok">{state.message ?? 'Request filed.'}</Banner>;
+  }
+
   return (
     <form className="form" action={action}>
       {state.error ? <Banner tone="danger">{state.error}</Banner> : null}
-      {state.message ? <Banner tone="ok">{state.message}</Banner> : null}
       <p className="small muted">
         This files an erasure request. The desk deletes your account, listings and claims within 7 days and emails you
         to confirm. It cannot be undone.
       </p>
-      <SubmitButton className="btn btn-danger btn-sm" pendingLabel="Filing…">
-        Request account deletion
-      </SubmitButton>
+
+      {confirming ? (
+        <>
+          <Banner tone="danger">
+            Confirm: this deletes your account, your listings and your claims. There is no undo.
+          </Banner>
+          <div className="row">
+            <SubmitButton className="btn btn-danger btn-sm" pendingLabel="Filing…">
+              Yes, request deletion
+            </SubmitButton>
+            <button type="button" className="btn btn-secondary btn-sm" onClick={() => setConfirming(false)}>
+              Cancel
+            </button>
+          </div>
+        </>
+      ) : (
+        <button type="button" className="btn btn-danger btn-sm" onClick={() => setConfirming(true)}>
+          Request account deletion
+        </button>
+      )}
     </form>
   );
 }

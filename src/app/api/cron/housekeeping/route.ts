@@ -30,6 +30,45 @@ type OutboxRow = {
 
 type EmailSummary = { attempted: number; sent: number; failed: number; note?: string };
 
+type StorageSummary = { attempted: number; deleted: number; failed: number; note?: string };
+
+/**
+ * Deletes the photos housekeeping queued. The queue is written in the same
+ * transaction as the row delete, so a Storage failure never loses the path —
+ * it stays queued with its error and is retried tomorrow.
+ */
+async function drainStorageQueue(admin: NonNullable<ReturnType<typeof supabaseAdmin>>): Promise<StorageSummary> {
+  const summary: StorageSummary = { attempted: 0, deleted: 0, failed: 0 };
+
+  const { data, error } = await admin
+    .from('storage_deletion_queue')
+    .select('id, storage_path, attempts')
+    .lt('attempts', 5)
+    .order('created_at', { ascending: true })
+    .limit(50);
+
+  if (error) return { ...summary, note: error.message };
+
+  for (const row of (data ?? []) as { id: string; storage_path: string; attempts: number }[]) {
+    summary.attempted += 1;
+    const { error: removeError } = await admin.storage.from('item-photos').remove([row.storage_path]);
+
+    if (removeError) {
+      summary.failed += 1;
+      await admin
+        .from('storage_deletion_queue')
+        .update({ attempts: row.attempts + 1, last_error: removeError.message.slice(0, 500) })
+        .eq('id', row.id);
+      continue;
+    }
+
+    summary.deleted += 1;
+    await admin.from('storage_deletion_queue').delete().eq('id', row.id);
+  }
+
+  return summary;
+}
+
 /** Retries queued mail. Runs after housekeeping so a stuck message still ages out. */
 async function dispatchOutbox(admin: NonNullable<ReturnType<typeof supabaseAdmin>>): Promise<EmailSummary> {
   const summary: EmailSummary = { attempted: 0, sent: 0, failed: 0 };
@@ -97,6 +136,7 @@ export async function GET(request: NextRequest) {
 
   const summary = (data ?? {}) as Summary;
   const email = await dispatchOutbox(admin);
+  const storage = await drainStorageQueue(admin);
   const paths = summary.photoPaths ?? [];
   let photosDeleted = 0;
 
@@ -105,9 +145,11 @@ export async function GET(request: NextRequest) {
     if (!storageError) photosDeleted = paths.length;
   }
 
+  const degraded = (storage.failed ?? 0) > 0 || (email.failed ?? 0) > 0;
+
   return NextResponse.json(
     {
-      ok: true,
+      ok: !degraded,
       expired: summary.expired ?? 0,
       purged: summary.purged ?? 0,
       photosDeleted,
@@ -116,6 +158,7 @@ export async function GET(request: NextRequest) {
       reportsDeleted: summary.reportsDeleted ?? 0,
       outboxDeleted: summary.outboxDeleted ?? 0,
       email,
+      storage,
       at: new Date().toISOString(),
     },
     { headers: { 'cache-control': 'no-store' } },

@@ -559,3 +559,22 @@ table.data tr:last-child td { border-bottom: 0; }
   .thread-side { flex-direction: row; align-items: center; }
   .bubble { max-width: 88%; }
 }
+
+/* ---------- dark mode for visitors who never chose ----------
+   The [data-theme="dark"] rules above only apply once someone picks a theme.
+   Without this mirror, a first visit on a dark phone gets dark tokens and light
+   component surfaces: dark text on a white card. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) input,
+  :root:not([data-theme="light"]) select,
+  :root:not([data-theme="light"]) textarea { background: var(--card); color: var(--ink); border-color: var(--line); }
+  :root:not([data-theme="light"]) .panel-head,
+  :root:not([data-theme="light"]) .chat-head { background: var(--surface-2); }
+  :root:not([data-theme="light"]) .site-header { background: var(--header-bg); }
+  :root:not([data-theme="light"]) .btn-secondary { color: var(--brand-ink); background: var(--card); }
+  :root:not([data-theme="light"]) .btn:not(.btn-secondary):not(.btn-ghost):not(.btn-danger) { color: #10231a; }
+  :root:not([data-theme="light"]) .nav a.btn:not(.btn-secondary):not(.btn-ghost):not(.btn-danger) { color: #10231a; }
+  :root:not([data-theme="light"]) .chip-quiet { background: var(--surface-3); }
+  :root:not([data-theme="light"]) .thread-row:hover { background: var(--surface-2); }
+  :root:not([data-theme="light"]) .bubble-mine { background: var(--brand-soft); }
+}

@@ -28,6 +28,8 @@ green on `main`.
 5. Email the owner when the item is green: what shipped, what was verified, what was not.
 6. If an item cannot be finished honestly in one run, leave it unchecked and say what is missing
    in this file — never tick a half-built feature.
+7. Run the lifecycle check in `docs/lifecycle-check.md` after any change to a claim, handover,
+   notification or audit function. It is the only test that walks the write path end to end.
 
 ## Item 5 is blocked on a decision, not on code
 
