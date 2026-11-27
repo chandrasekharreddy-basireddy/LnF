@@ -6,6 +6,11 @@ import { spawn } from 'node:child_process';
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { setTimeout as sleep } from 'node:timers/promises';
 import net from 'node:net';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+// Resolve the project from this file, never from the machine it happens to run on.
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 import { startMock } from './mock-supabase.mjs';
 
 const PORT = Number(process.env.SMOKE_PORT ?? 3400 + Math.floor(Math.random() * 400));
@@ -60,8 +65,8 @@ try {
 
 // Call the installed binary through this node process: no reliance on PATH,
 // no npx resolution, and it works the same locally and in CI.
-const child = spawn(process.execPath, ['node_modules/next/dist/bin/next', 'start', '-p', String(PORT)], {
-  cwd: '/scratch/work/lnf',
+const child = spawn(process.execPath, [path.join(ROOT, 'node_modules/next/dist/bin/next'), 'start', '-p', String(PORT)], {
+  cwd: ROOT,
   stdio: ['ignore', 'pipe', 'pipe'],
   env: {
     ...process.env,
