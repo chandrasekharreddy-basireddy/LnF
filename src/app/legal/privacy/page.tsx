@@ -78,7 +78,7 @@ export default function PrivacyPage() {
       <p>
         You can see and correct your details on your <Link href="/account">account page</Link>, withdraw consent there,
         and file an erasure request in one click. The desk completes erasure within 7 days and confirms by email. If you
-        believe something is wrong, write to {env.supportEmail}.
+        believe something is wrong, write to {env.supportContact}.
       </p>
 
       <h2>Processors</h2>

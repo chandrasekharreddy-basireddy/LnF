@@ -30,14 +30,13 @@ export function SignInForm({ next = '/account' }: { next?: string }) {
             type="text"
             inputMode="numeric"
             autoComplete="one-time-code"
-            pattern="[0-9]{6}"
-            maxLength={6}
+            pattern="[0-9]{6,8}"
+            maxLength={8}
             required
             style={{ fontFamily: 'var(--mono)', fontSize: '1.4rem', letterSpacing: '0.3em', textAlign: 'center' }}
           />
           <p className="hint">
-            Sent to {email}. Check spam if it has not arrived in a minute, or open the link in the email instead. You can
-            ask for a new code by reloading this page.
+            Sent to {email}. Check spam if it has not arrived in a minute. Reload this page to ask for a new code.
           </p>
         </div>
         <SubmitButton pendingLabel="Verifying…">Verify and sign in</SubmitButton>
@@ -56,7 +55,7 @@ export function SignInForm({ next = '/account' }: { next?: string }) {
           type="email"
           autoComplete="email"
           required
-          placeholder="you@campus.edu"
+          placeholder="you@example.com"
           defaultValue={email}
         />
         <p className="hint">We email a one-time code. No password to remember or leak.</p>

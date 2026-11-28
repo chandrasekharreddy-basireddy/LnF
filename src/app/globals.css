@@ -588,6 +588,8 @@ table.data tr:last-child td { border-bottom: 0; }
 .kv dd, .kv .v { min-width: 0; overflow-wrap: anywhere; }
 
 :root[data-theme="dark"] .btn-danger { color: #2b0a08; }
+  /* dark hover: the dark fill with dark ink measured 2.00:1 */
+  :root[data-theme="dark"] .btn-danger:hover { background: #ff8f85; color: #2b0a08; }
 :root[data-theme="dark"] .timeline li.done .node { color: #10231a; }
 :root[data-theme="dark"] .skip:focus { color: #10231a; }
 @media (prefers-color-scheme: dark) {

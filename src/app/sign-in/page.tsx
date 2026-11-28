@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { Banner } from '@/components/banner';
 import { redirect } from 'next/navigation';
 import { currentUser } from '@/lib/data';
 import { SignInForm } from '@/components/sign-in-form';
@@ -32,6 +33,17 @@ export default async function SignInPage({
       </p>
 
       <div className="card">
+        {typeof sp.error === 'string' ? (
+          <div style={{ marginBottom: 16 }}>
+            <Banner tone="warn" title="That link did not work">
+              {sp.error === 'expired'
+                ? 'It has already been used or has expired. Enter the code from the email, or ask for a new one.'
+                : sp.error === 'unavailable'
+                  ? 'Sign-in is not configured on this deployment. Tell the desk.'
+                  : 'Open the sign-in page again and ask for a new code.'}
+            </Banner>
+          </div>
+        ) : null}
         <SignInForm next={next} />
       </div>
 

@@ -51,7 +51,7 @@ const wrap = (
           Handovers happen at ${esc(env.deskLabel)}, against an approved claim.
           ${options.footerNote ? `<br><br>${options.footerNote}` : ''}
           <br><br>
-          <span style="color:#8a938f">L&amp;F · ${esc(env.campusName)} · ${esc(env.supportEmail)}</span>
+          <span style="color:#8a938f">L&amp;F · ${esc(env.campusName)}${env.supportEmail ? ` · ${esc(env.supportEmail)}` : ''}</span>
         </td></tr>
       </table>
     </td></tr>
@@ -278,13 +278,16 @@ export async function sendOrQueue(opts: {
 
   try {
     const supabase = await supabaseServer();
-    const { error } = await supabase.rpc('queue_email_retry', {
+    const { data, error } = await supabase.rpc('queue_email_retry', {
       p_dedupe_key: opts.dedupeKey,
       p_event_type: opts.eventType,
       p_payload: opts.payload,
       p_to: opts.to,
     });
-    if (!error) return 'queued';
+    // the RPC answers 200 with {ok:false} for a rejected event type, so the
+    // transport error alone is not enough to call this queued
+    if (!error && (data as { ok?: boolean } | null)?.ok === true) return 'queued';
+    console.warn('[email] not queued:', opts.eventType, error?.message ?? 'rejected by the queue');
   } catch {
     // the user's action must not fail because a retry could not be recorded
   }

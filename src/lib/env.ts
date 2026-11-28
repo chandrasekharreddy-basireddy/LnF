@@ -12,7 +12,11 @@ export const env = {
   cronSecret: process.env.CRON_SECRET ?? '',
   campusName: process.env.NEXT_PUBLIC_CAMPUS_NAME ?? 'Campus',
   deskLabel: process.env.NEXT_PUBLIC_DESK_LABEL ?? 'Main Gate & Security Desk',
-  supportEmail: process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? 'help@lnf.app',
+  // no invented address: an unset support email reads as "the desk" in copy
+  supportEmail: process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? '',
+  supportContact: process.env.NEXT_PUBLIC_SUPPORT_EMAIL
+    ? process.env.NEXT_PUBLIC_SUPPORT_EMAIL
+    : 'the desk',
   // Web push. All three are optional: without them /account says push is off
   // and the dispatcher refuses with a named reason instead of failing blind.
   vapidPublicKey: process.env.VAPID_PUBLIC_KEY ?? '',

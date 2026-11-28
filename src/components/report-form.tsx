@@ -243,7 +243,7 @@ export function ReportForm({
           type="email"
           autoComplete="email"
           defaultValue={defaultEmail ?? ''}
-          placeholder="you@campus.edu"
+          placeholder="you@example.com"
         />
         <p className="hint">Kept private. Used only for this item and never shown on the board.</p>
       </div>

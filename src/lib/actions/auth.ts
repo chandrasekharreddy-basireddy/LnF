@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { supabaseServer } from '@/lib/supabase-server';
 import { isEmail, safeInternalPath, str } from '@/lib/validation';
 import { issueSignInCode, sendWelcome } from '@/lib/auth/signin';
+import { cookies } from 'next/headers';
 import { callerIp } from '@/lib/http';
 
 export type AuthState = { step: 'email' | 'otp'; email?: string; error?: string; notice?: string };
@@ -81,8 +82,27 @@ export async function verifyOtp(_prev: AuthState, formData: FormData): Promise<A
 
   try {
     const supabase = await supabaseServer();
-    const { data: authData, error } = await supabase.auth.verifyOtp({ email, token, type: 'email' });
-    if (error) {
+
+    // The code is minted by admin.generateLink({ type: 'magiclink' }), and
+    // Supabase binds an OTP to the type that created it. Verifying a magiclink
+    // code as type 'email' returns "Token has expired or is invalid" for a code
+    // that is perfectly valid — which is exactly how this failed in production.
+    // 'magiclink' first, 'email' second for codes minted by a signup flow.
+    let authData: Awaited<ReturnType<typeof supabase.auth.verifyOtp>>['data'] | null = null;
+    let error: { message: string } | null = null;
+    for (const type of ['magiclink', 'email'] as const) {
+      const attempt = await supabase.auth.verifyOtp({ email, token, type });
+      if (!attempt.error) {
+        authData = attempt.data;
+        error = null;
+        break;
+      }
+      error = attempt.error;
+    }
+
+    if (error || !authData) {
+      // the reason matters to whoever runs this, the wording does not help a user
+      console.warn('[auth] verifyOtp failed:', error?.message ?? 'no data');
       await logAuthEvent('code_failed', email);
       return { step: 'otp', email, error: 'That code is wrong or has expired. Request a new one.' };
     }
@@ -105,8 +125,20 @@ export async function verifyOtp(_prev: AuthState, formData: FormData): Promise<A
 }
 
 export async function signOut(): Promise<void> {
+  await forgetDevicePush();
   const supabase = await supabaseServer();
-  await supabase.auth.signOut();
+  const { error } = await supabase.auth.signOut();
+
+  if (error) {
+    // signOut() returns before it clears storage when GoTrue answers 5xx or the
+    // network blips. Redirecting anyway would leave a fully valid session on a
+    // shared counter machine, so the cookies go regardless.
+    const store = await cookies();
+    for (const cookie of store.getAll()) {
+      if (cookie.name.startsWith('sb-')) store.delete(cookie.name);
+    }
+  }
+
   redirect('/');
 }
 

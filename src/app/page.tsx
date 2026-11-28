@@ -4,6 +4,7 @@ import { env } from '@/lib/env';
 import { ItemCard } from '@/components/item-card';
 import { SafetyNote } from '@/components/safety-note';
 import { EmptyState } from '@/components/empty-state';
+import { Banner } from '@/components/banner';
 import { CategoryIcon } from '@/components/category-icon';
 
 export const dynamic = 'force-dynamic';
@@ -101,7 +102,12 @@ export default async function HomePage() {
           </Link>
         </div>
 
-        {recent.items.length ? (
+        {recent.ok === false ? (
+          <Banner tone="warn" title="The board did not load">
+            This is not an empty board — the listings could not be fetched. Reload in a moment; if it keeps
+            happening, the desk can look up your reference directly.
+          </Banner>
+        ) : recent.items.length ? (
           <div className="item-grid">
             {recent.items.map((item) => (
               <ItemCard key={item.id} item={item} />

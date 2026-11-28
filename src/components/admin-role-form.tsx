@@ -16,7 +16,7 @@ export function RoleForm() {
       <div className="field-row">
         <div className="field">
           <label htmlFor="email">Account email</label>
-          <input id="email" name="email" type="email" required placeholder="staff@campus.edu" />
+          <input id="email" name="email" type="email" required placeholder="name@example.com" />
           <p className="hint">They must sign in once before a role can be granted.</p>
         </div>
         <div className="field">

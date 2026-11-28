@@ -45,7 +45,7 @@ export default async function SafetyPage() {
       <h2>If something feels wrong</h2>
       <p>
         Use &ldquo;Report a problem with this listing&rdquo; on the item page. It reaches the desk immediately and is
-        logged. For anything urgent, call the desk or write to {env.supportEmail}.
+        logged. For anything urgent, call the desk or write to {env.supportContact}.
       </p>
 
       <h2>If you found an ID card or bank card</h2>

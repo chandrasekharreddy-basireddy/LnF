@@ -34,8 +34,8 @@ export function PublicClaimForm({ itemRef, question }: { itemRef: string; questi
             type="text"
             inputMode="numeric"
             autoComplete="one-time-code"
-            pattern="[0-9]{6}"
-            maxLength={6}
+            pattern="[0-9]{6,8}"
+            maxLength={8}
             required
             style={{ fontFamily: 'var(--mono)', fontSize: '1.4rem', letterSpacing: '0.3em', textAlign: 'center' }}
           />
@@ -59,7 +59,7 @@ export function PublicClaimForm({ itemRef, question }: { itemRef: string; questi
           type="email"
           autoComplete="email"
           required
-          placeholder="you@campus.edu"
+          placeholder="you@example.com"
           aria-invalid={Boolean(fe.email)}
         />
         {fe.email ? <p className="error">{fe.email}</p> : <p className="hint">No account needed. We send a code to prove it is yours.</p>}

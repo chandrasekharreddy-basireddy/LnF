@@ -36,6 +36,14 @@ if (!isLocalMock && key.length < 40) {
   problems.push(`NEXT_PUBLIC_SUPABASE_ANON_KEY is ${key ? 'too short' : 'empty'}`);
 }
 
+// NEXT_PUBLIC_SITE_URL defaults to localhost, which would end up inside every
+// email the app sends. Only a local build may leave it unset.
+const site = process.env.NEXT_PUBLIC_SITE_URL ?? '';
+const localBuild = process.env.VERCEL !== '1' && process.env.CI !== 'true';
+if (!localBuild && !site.startsWith('https://')) {
+  problems.push(`NEXT_PUBLIC_SITE_URL is ${site || 'empty'} — every email would link to ${site || 'localhost:3000'}`);
+}
+
 if (problems.length > 0) {
   console.error('\npreflight: this build cannot reach Supabase.');
   for (const p of problems) console.error('  - ' + p);

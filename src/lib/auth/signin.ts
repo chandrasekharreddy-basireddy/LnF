@@ -76,9 +76,11 @@ export async function issueSignInCode(email: string): Promise<IssueResult> {
     }
 
     const code = data.properties.email_otp;
-    // the same token as a clickable link, for a person who would rather tap
-    const actionUrl = data.properties.action_link;
-    const mail = templates.signInCode(code, email, 'signin', actionUrl);
+    // Deliberately NO link. Supabase's action_link points at /auth/v1/verify,
+    // which consumes the token — and mail scanners at universities prefetch
+    // links, which burned the code before the person could type it. A code-only
+    // email cannot be spent by a robot reading it.
+    const mail = templates.signInCode(code, email);
     const sent = await sendEmail({ to: email, ...mail });
 
     if (!sent.ok) {

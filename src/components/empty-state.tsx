@@ -15,7 +15,7 @@ export function EmptyState({
   return (
     <div className="card text-center" style={{ padding: '40px 24px' }}>
       {icon ? <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'center' }}>{icon}</div> : null}
-      <h3 style={{ marginBottom: 8 }}>{title}</h3>
+      <h2 style={{ marginBottom: 8 }}>{title}</h2>
       <p className="muted" style={{ maxWidth: '52ch', margin: '0 auto 18px' }}>
         {body}
       </p>
