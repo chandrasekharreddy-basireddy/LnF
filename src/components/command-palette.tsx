@@ -54,6 +54,25 @@ export function CommandPalette({ staff = false }: { staff?: boolean }) {
       if (event.key === 'Escape') {
         setOpen(false);
         setQuery('');
+        return;
+      }
+      // keep focus inside the dialog while it is open
+      if (event.key === 'Tab') {
+        const dialog = document.querySelector('[role="dialog"][aria-modal="true"]');
+        if (!dialog) return;
+        const focusable = dialog.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input, [tabindex]:not([tabindex="-1"])',
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
       }
     };
     window.addEventListener('keydown', onKey);
