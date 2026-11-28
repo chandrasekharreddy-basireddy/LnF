@@ -156,6 +156,11 @@ export async function setItemStatus(_prev: StaffState, formData: FormData): Prom
     if (error) return { ok: false, error: 'Could not change that listing.' };
     const result = data as { ok: boolean; error?: string };
     if (!result?.ok) return { ok: false, error: errorText(result?.error) };
+    // a first-time reporter's listing goes live silently otherwise
+    if (status === 'available') {
+      await notifyListingPublished(itemRef);
+    }
+
     revalidatePath('/staff');
     revalidatePath('/staff/items/' + itemRef);
     revalidatePath('/browse');
@@ -207,5 +212,31 @@ export async function closeReport(_prev: StaffState, formData: FormData): Promis
     return { ok: true, message: 'Report closed.' };
   } catch {
     return { ok: false, error: 'Could not reach the desk.' };
+  }
+}
+
+/** Best effort: tell the reporter their pending listing is on the board now. */
+async function notifyListingPublished(itemRef: string): Promise<void> {
+  try {
+    const supabase = await supabaseServer();
+    const { data } = await supabase
+      .from('items')
+      .select('title, type, contact_email, finder_email')
+      .eq('ref_code', itemRef)
+      .maybeSingle();
+
+    const row = data as { title?: string; type?: 'lost' | 'found'; contact_email?: string | null; finder_email?: string | null } | null;
+    const to = row?.contact_email || row?.finder_email;
+    if (!to) return;
+
+    await sendOrQueue({
+      to,
+      mail: templates.itemPublished(itemRef, row?.title ?? 'Your item', row?.type === 'lost' ? 'lost' : 'found'),
+      eventType: 'item_published',
+      payload: { ref: itemRef, title: row?.title ?? 'Your item', kind: row?.type === 'lost' ? 'lost' : 'found' },
+      dedupeKey: `item_published:${itemRef}`,
+    });
+  } catch {
+    // the status change stands even if the notice cannot be sent
   }
 }

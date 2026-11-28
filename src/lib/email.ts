@@ -138,6 +138,18 @@ export const templates = {
     tag: 'welcome',
   }),
 
+  erasureConfirmed: (email: string) => ({
+    subject: 'Your L&F account and records have been erased',
+    html: wrap(
+      'Erasure complete',
+      `<p>Your L&amp;F account (<strong>${esc(email)}</strong>), along with your listings, uploaded photos, saved items and claims, has been deleted.</p>
+       <p>Records the desk must keep for its own custody and audit trail are retained without your name or contact details.</p>
+       <p style="font-size:13px;color:#5b6b66">No further emails will be sent to this address unless you choose to sign in again.</p>`,
+    ),
+    text: `Your L&F account (${email}) and associated personal records have been permanently deleted. No further emails will be sent unless you sign in again.`,
+    tag: 'erasure-confirmed',
+  }),
+
   itemPublished: (ref: string, title: string, kind: 'lost' | 'found') => ({
     subject: kind === 'found' ? `Handed in: ${title} (${ref})` : `Lost report live: ${title} (${ref})`,
     html: wrap(
@@ -215,7 +227,8 @@ export type OutboxEvent =
   | 'claim_received'
   | 'claim_decided'
   | 'finder_thanks'
-  | 'match_alert';
+  | 'match_alert'
+  | 'erasure_confirmed';
 
 export type RenderedMail = { subject: string; html: string; text: string; tag?: string };
 
@@ -223,6 +236,8 @@ export type RenderedMail = { subject: string; html: string; text: string; tag?: 
 export function renderOutboxMail(eventType: string, payload: Record<string, unknown>): RenderedMail | null {
   const text = (key: string, fallback = '') => String(payload[key] ?? fallback);
   switch (eventType) {
+    case 'erasure_confirmed':
+      return templates.erasureConfirmed(text('email'));
     case 'item_published':
       return templates.itemPublished(text('ref'), text('title', 'Your item'), text('kind') === 'lost' ? 'lost' : 'found');
     case 'claim_received':

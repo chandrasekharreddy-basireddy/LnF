@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { adminUsers, currentUser, isAdmin } from '@/lib/data';
 import { RoleForm } from '@/components/admin-role-form';
+import { EraseUserForm } from '@/components/admin-erase-form';
 import { formatDate } from '@/lib/validation';
 
 export const dynamic = 'force-dynamic';
@@ -38,6 +39,7 @@ export default async function AdminUsersPage() {
                     <th scope="col">Account</th>
                     <th scope="col">Roles</th>
                     <th scope="col">Joined</th>
+                    <th scope="col">Erasure</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -57,6 +59,13 @@ export default async function AdminUsersPage() {
                         </div>
                       </td>
                       <td>{formatDate(u.createdAt)}</td>
+                      <td>
+                        {u.id === user.id ? (
+                          <span className="small muted">you</span>
+                        ) : (
+                          <EraseUserForm userId={u.id} email={u.email ?? 'this account'} />
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
