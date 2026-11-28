@@ -15,7 +15,7 @@ green on `main`.
 | 5 | Claim-proof attachments (redacted) | [ ] needs a product decision — see below |
 | 6 | Dispute room + trust signals | [x] done — migration 0030, `disputes` + `/disputes` + `/staff/disputes`, claimant trust for staff and a person-free dispute record on `/safety`; see `docs/disputes.md`. Upholding reopens a claim only while the item is still in custody. Not yet applied to the live project |
 | 7 | Institution analytics + monthly PDF | [x] done — migration 0031, `institution_analytics()` + `log_report_export()`, `/staff/analytics` and a hand-written PDF at `/api/staff/report/monthly`; cohort arithmetic and staff-only access proved against a real Postgres, PDF opened with a real parser. Not yet applied to the live project; see `docs/analytics.md` |
-| 8 | Custody timeline for the owner | [x] done — migration 0032, `item_custody_timeline(ref)` + `/items/[ref]/timeline`; reporter-or-staff only, a stranger's reference answers `NOT_FOUND` like a missing one, and a claim is a count and a date, never a person. 51 database checks, 23 unit tests; CI green on `824da27`. Not yet applied to the live project; the signed-in render rests on the tested builder, not on the smoke gate (see `docs/custody-timeline.md`) |
+| 8 | Custody timeline for the owner | [ ] |
 | 9 | PWA + offline desk | [ ] |
 
 ## Standing rules for every run
@@ -30,6 +30,8 @@ green on `main`.
    in this file — never tick a half-built feature.
 7. Run the lifecycle check in `docs/lifecycle-check.md` after any change to a claim, handover,
    notification or audit function. It is the only test that walks the write path end to end.
+8. Apply the migration to the live project in the same run, and tick the item only after both the
+   migration and CI are green. "Written but not applied" is not done.
 
 ## Item 5 is blocked on a decision, not on code
 
