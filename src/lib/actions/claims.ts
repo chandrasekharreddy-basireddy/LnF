@@ -137,7 +137,7 @@ export async function startPublicClaim(_prev: PublicClaimState, formData: FormDa
       ok: true,
       step: 'verify',
       email,
-      notice: `We sent a 6-digit code to ${email}. It proves the address and keeps your claim tied to you.`,
+      notice: `We sent a code to ${email}. It proves the address and keeps your claim tied to you.`,
     };
   } catch {
     return { ok: false, step: 'details', error: 'Could not reach the board. Try again.' };
@@ -148,8 +148,8 @@ export async function finishPublicClaim(_prev: PublicClaimState, formData: FormD
   const email = str(formData.get('email')).toLowerCase();
   const token = str(formData.get('token')).replace(/\s+/g, '');
 
-  if (!/^\d{6}$/.test(token)) {
-    return { ok: false, step: 'verify', email, error: 'Enter the 6-digit code from the email.' };
+  if (!/^\d{6,8}$/.test(token)) {
+    return { ok: false, step: 'verify', email, error: 'Enter the code from the email — it is all digits.' };
   }
 
   let claimRef = '';

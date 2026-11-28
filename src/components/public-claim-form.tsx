@@ -27,7 +27,7 @@ export function PublicClaimForm({ itemRef, question }: { itemRef: string; questi
         {startState.notice ? <Banner tone="info">{startState.notice}</Banner> : null}
         {finishState.error ? <Banner tone="danger">{finishState.error}</Banner> : null}
         <div className="field">
-          <label htmlFor="claim-token">6-digit code</label>
+          <label htmlFor="claim-token">Code from the email</label>
           <input
             id="claim-token"
             name="token"

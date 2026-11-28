@@ -54,3 +54,22 @@ describe('typed reference routing', () => {
     expect(referencePath('')).toBeNull();
   });
 });
+
+
+describe('sign-in code shape', () => {
+  // Supabase's Email OTP Length setting is 6 or 8 depending on the project; the
+  // app used to accept only 6 and locked people out of their own accounts.
+  const accepts = (token: string) => /^\d{6,8}$/.test(token);
+
+  it('accepts both lengths Supabase issues', () => {
+    expect(accepts('123456')).toBe(true);
+    expect(accepts('12345678')).toBe(true);
+  });
+
+  it('still refuses letters, short codes and pasted whitespace', () => {
+    expect(accepts('12345')).toBe(false);
+    expect(accepts('123456789')).toBe(false);
+    expect(accepts('12345a')).toBe(false);
+    expect(accepts('123 456')).toBe(false);
+  });
+});

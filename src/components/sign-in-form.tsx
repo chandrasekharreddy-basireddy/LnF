@@ -23,7 +23,7 @@ export function SignInForm({ next = '/account' }: { next?: string }) {
         {state.notice ? <Banner tone="info">{state.notice}</Banner> : null}
         {error ? <Banner tone="danger">{error}</Banner> : null}
         <div className="field">
-          <label htmlFor="token">6-digit code</label>
+          <label htmlFor="token">Code from the email</label>
           <input
             id="token"
             name="token"
@@ -59,7 +59,7 @@ export function SignInForm({ next = '/account' }: { next?: string }) {
           placeholder="you@campus.edu"
           defaultValue={email}
         />
-        <p className="hint">We email a 6-digit code. No password to remember or leak.</p>
+        <p className="hint">We email a one-time code. No password to remember or leak.</p>
       </div>
       <SubmitButton pendingLabel="Sending code…">Email me a code</SubmitButton>
     </form>

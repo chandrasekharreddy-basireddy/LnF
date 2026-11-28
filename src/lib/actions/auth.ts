@@ -61,7 +61,7 @@ export async function requestOtp(_prev: AuthState, formData: FormData): Promise<
   return {
     step: 'otp',
     email,
-    notice: `We sent a 6-digit code to ${email}. It works once and expires in ten minutes.`,
+    notice: `We sent a code to ${email}. It works once and expires in ten minutes.`,
   };
 }
 
@@ -70,8 +70,10 @@ export async function verifyOtp(_prev: AuthState, formData: FormData): Promise<A
   const token = str(formData.get('token')).replace(/\s+/g, '');
   const next = safeInternalPath(str(formData.get('next')));
 
-  if (!/^\d{6}$/.test(token)) {
-    return { step: 'otp', email, error: 'Enter the 6-digit code from the email.' };
+  // Supabase issues 6 or 8 digits depending on the project's Email OTP Length
+  // setting. Rejecting anything but 6 locked people out of their own account.
+  if (!/^\d{6,8}$/.test(token)) {
+    return { step: 'otp', email, error: 'Enter the code from the email — it is all digits.' };
   }
 
   let firstTime = false;

@@ -8,7 +8,7 @@ const ALLOWED_TYPES = new Set(['email', 'magiclink', 'signup'] as const);
 type AllowedOtpType = 'email' | 'magiclink' | 'signup';
 
 /**
- * Magic-link landing. The 6-digit code path does not need this route, but the
+ * Magic-link landing. The typed-code path does not need this route, but the
  * email also carries a link, and a link that 404s is a broken promise.
  *
  * The OTP type is allow-listed: `recovery` and `email_change` are not sign-in
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     firstTime = !profile?.email_verified_at;
     name = (profile?.full_name as string | null) ?? null;
 
-    // the same parity the 6-digit path has: verified marker plus an audit row
+    // the same parity the typed-code path has: verified marker plus an audit row
     await supabase.rpc('mark_email_verified');
     if (email) {
       await (supabaseAdmin() ?? supabase).rpc('log_auth_event', {
