@@ -71,7 +71,15 @@ export async function createReport(_prev: ReportState, formData: FormData): Prom
       p_finder_email: null,
       p_reporter_kind: 'member',
     });
-    if (error) return { ok: false, error: 'We could not save that report. Try again in a moment.' };
+    if (error) {
+      // The user gets a support code, the log gets the cause. Without this the
+      // only evidence of a production failure was "try again in a moment".
+      console.error('[reports] create_item failed:', error.code ?? '', error.message ?? '', error.details ?? '');
+      return {
+        ok: false,
+        error: `We could not save that report. Try again in a moment. (code ${error.code ?? 'unknown'})`,
+      };
+    }
     const result = data as { ok: boolean; error?: string; ref?: string; status?: string };
     if (!result?.ok) return { ok: false, error: errorText(result?.error) };
     ref = result.ref ?? '';
