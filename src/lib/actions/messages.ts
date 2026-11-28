@@ -7,7 +7,7 @@ import { errorText } from '@/lib/copy';
 import { scanText } from '@/lib/antifraud';
 import { safeInternalPath, str } from '@/lib/validation';
 
-export type MessageState = { ok: boolean; error?: string; message?: string };
+export type MessageState = { ok: boolean; error?: string; message?: string; sentAt?: number };
 
 export async function postMessage(_prev: MessageState, formData: FormData): Promise<MessageState> {
   const user = await currentUser();
@@ -45,7 +45,7 @@ export async function postMessage(_prev: MessageState, formData: FormData): Prom
 
     revalidatePath(backTo);
     revalidatePath(`/claims/${claimRef}`);
-    return { ok: true, message: 'Sent. It stays on the board.' };
+    return { ok: true, message: 'Sent. It stays on the board.', sentAt: Date.now() };
   } catch {
     return { ok: false, error: 'Could not reach the board. Try again.' };
   }

@@ -91,8 +91,11 @@ export function ChatThread({
       // the settle timer below marks this as polling
     }
 
-    // a background tab does not need a request every five seconds
-    const timer = window.setInterval(() => {
+    // A live socket already pushes; a closed thread will never change; and a
+    // background tab does not need a request every five seconds.
+    const timer = locked
+      ? null
+      : window.setInterval(() => {
       if (document.hidden) return;
       void fetchThread(claimRef).then((snapshot) => {
         if (cancelled || !snapshot.ok) return;
@@ -106,19 +109,20 @@ export function ChatThread({
 
     return () => {
       cancelled = true;
-      window.clearInterval(timer);
+      if (timer) window.clearInterval(timer);
       window.clearTimeout(settle);
       if (channel) void supabaseBrowser().removeChannel(channel);
     };
-  }, [claimId, claimRef, merge]);
+  }, [claimId, claimRef, merge, locked]);
 
   // pull once after a successful send, so the sender sees their own message
+  const sentAt = state.ok ? state.sentAt : undefined;
   useEffect(() => {
-    if (!state.ok) return;
+    if (!sentAt) return;
     void fetchThread(claimRef).then((snapshot) => {
       if (snapshot.ok) merge(snapshot.messages);
     });
-  }, [state.ok, claimRef, merge]);
+  }, [sentAt, claimRef, merge]);
 
   useEffect(() => {
     if (messages.length !== lastCount.current) {
@@ -162,8 +166,8 @@ export function ChatThread({
             </li>
           ))
         )}
-        <div ref={bottom} />
       </ol>
+      <div ref={bottom} />
 
       {locked ? (
         <Banner tone="info">{lockReason ?? 'This thread is read-only.'}</Banner>
