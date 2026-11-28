@@ -108,6 +108,7 @@ export async function signOut(): Promise<void> {
   redirect('/');
 }
 
+
 /**
  * Signing out also unsubscribes this browser from push. Without it the next
  * person to use the device keeps receiving the previous owner's notifications,

@@ -267,6 +267,10 @@ export async function sendOrQueue(opts: {
 }): Promise<'sent' | 'queued' | 'skipped'> {
   if (!opts.to) return 'skipped';
 
+  // Without a provider there is nothing to retry: queueing would fill the outbox
+  // with rows the drain can never deliver.
+  if (!env.brevoApiKey) return 'skipped';
+
   const result = await sendEmail({ to: opts.to, ...opts.mail });
   if (result.ok) return 'sent';
 

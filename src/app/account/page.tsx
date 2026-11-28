@@ -9,7 +9,7 @@ import { buildWhatsAppLink } from '@/lib/whatsapp';
 import { AccountForm, DeleteAccount } from '@/components/account-form';
 import { StatusChip } from '@/components/status-chip';
 import { formatDate } from '@/lib/validation';
-import { signOut } from '@/lib/actions/auth';
+import { SignOutForm } from '@/components/sign-out-form';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { cookies } from 'next/headers';
 
@@ -43,11 +43,7 @@ export default async function AccountPage() {
             {user.email} · roles: {user.roles.join(', ') || 'member'}
           </p>
         </div>
-        <form action={signOut}>
-          <button className="btn btn-secondary btn-sm" type="submit">
-            Sign out
-          </button>
-        </form>
+        <SignOutForm />
       </div>
 
       <div className="split" style={{ marginTop: 20 }}>

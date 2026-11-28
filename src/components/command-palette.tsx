@@ -164,6 +164,15 @@ export function CommandPalette({ staff = false }: { staff?: boolean }) {
               ))}
               {!filtered.length && !refMatch ? <li className="small muted">Nothing matches “{trimmed}”.</li> : null}
             </ul>
+            {trimmed && !referencePath(trimmed.toUpperCase()) ? (
+              <button
+                type="button"
+                className="palette-row"
+                onClick={() => go(`/browse?q=${encodeURIComponent(trimmed)}`)}
+              >
+                Search the board for “{trimmed}”
+              </button>
+            ) : null}
             <div className="palette-foot">Enter opens the first result · Escape closes</div>
           </div>
         </div>
