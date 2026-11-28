@@ -1,6 +1,7 @@
 import { cache } from 'react';
 import { supabaseServer } from './supabase-server';
 import type { ReportSnapshot } from './monthly-report';
+import type { CustodyPayload } from './custody';
 import type {
   BoardStats, ClaimDetail, ClaimSummary, ClaimThread, Conversation, DisputableClaim, DisputeQueueRow,
   DisputeRoom, DisputeSummary, Photo, PublicItem, PublicTrust, SearchResult, SessionUser, SignedPhoto, TrustCounts,
@@ -618,5 +619,22 @@ export async function logReportExport(from: string, to: string): Promise<boolean
     return Boolean(data && typeof data === 'object' && (data as { ok?: boolean }).ok === true);
   } catch {
     return false;
+  }
+}
+
+/**
+ * The chain of custody for one item, as its reporter (or staff) sees it. The
+ * function behind this returns NOT_FOUND for anyone else, so a null here means
+ * "no such item, or not yours" — the page answers both the same way.
+ */
+export async function custodyTimeline(ref: string): Promise<CustodyPayload | null> {
+  try {
+    const supabase = await supabaseServer();
+    const { data, error } = await supabase.rpc('item_custody_timeline', { p_ref: ref });
+    if (error || !data || typeof data !== 'object') return null;
+    const payload = data as CustodyPayload;
+    return payload.ok === true ? payload : null;
+  } catch {
+    return null;
   }
 }

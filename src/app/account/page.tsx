@@ -84,9 +84,14 @@ export default async function AccountPage() {
                           </td>
                           <td>{formatDate(i.created_at)}</td>
                           <td>
-                            <Link className="btn btn-secondary btn-sm" href={`/items/${i.ref_code}`}>
-                              View
-                            </Link>
+                            <div className="row" style={{ gap: 6 }}>
+                              <Link className="btn btn-secondary btn-sm" href={`/items/${i.ref_code}`}>
+                                View
+                              </Link>
+                              <Link className="btn btn-secondary btn-sm" href={`/items/${i.ref_code}/timeline`}>
+                                Timeline
+                              </Link>
+                            </div>
                           </td>
                         </tr>
                       ))}

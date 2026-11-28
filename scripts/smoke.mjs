@@ -191,7 +191,7 @@ try {
 
   const staff = await get(BASE + '/staff', { redirect: 'manual' });
   log('CHECK /staff unauthenticated ->', staff.status, staff.headers.get('location'));
-  for (const guarded of ['/staff/scan', '/staff/disposal', '/staff/matches', '/staff/disputes', '/staff/items/LF-2026-0007/label', '/account', '/account/saved', '/messages', '/messages/CLM-2026-0001', '/disputes', '/disputes/DSP-2026-0001', '/staff/import', '/staff/analytics']) {
+  for (const guarded of ['/staff/scan', '/staff/disposal', '/staff/matches', '/staff/disputes', '/staff/items/LF-2026-0007/label', '/account', '/account/saved', '/messages', '/messages/CLM-2026-0001', '/disputes', '/disputes/DSP-2026-0001', '/staff/import', '/staff/analytics', '/items/LF-2026-0007/timeline']) {
     const res = await get(BASE + guarded, { redirect: 'manual' });
     const loc = res.headers.get('location') ?? '';
     const body = await res.text();
@@ -199,10 +199,32 @@ try {
     // the redirect to the client in a 200 payload. Both are correct; rendering
     // the staff UI is not.
     const redirected = (res.status === 307 && loc.includes('/sign-in')) || /\/sign-in\?next=/.test(body);
-    const leaked = /Disposal queue|Scan a tag|Saved searches|No pairs waiting|Record the outcome|Ask for a second look|Download the PDF|Recovery rate/.test(body);
+    const leaked = /Disposal queue|Scan a tag|Saved searches|No pairs waiting|Record the outcome|Ask for a second look|Download the PDF|Recovery rate|Days in the chain/.test(body);
     log(`CHECK ${guarded} guarded ->`, redirected && !leaked, `(${res.status})`);
   }
 
+
+  // the custody timeline (0032): the reporter's own item, behind their session
+  const timelineAnon = await get(BASE + '/items/LF-2026-0007/timeline', { redirect: 'manual' });
+  const timelineBody = await timelineAnon.text();
+  const timelineRedirected =
+    (timelineAnon.status === 307 && (timelineAnon.headers.get('location') ?? '').includes('/sign-in')) ||
+    /\/sign-in\?next=/.test(timelineBody);
+  log('CHECK the custody timeline is behind a session ->', timelineRedirected, `(${timelineAnon.status})`);
+  log(
+    'CHECK and draws no step before the session is checked:',
+    !/Days in the chain|What happened, in order|Claims received/.test(timelineBody),
+  );
+  // a signed-out visitor is sent to sign-in whatever the reference is, so this
+  // is the shape check: no 500, and no timeline drawn from a reference that
+  // does not exist
+  const timelineMissing = await get(BASE + '/items/LF-2026-9999/timeline', { redirect: 'manual' });
+  const timelineMissingBody = await timelineMissing.text();
+  log(
+    'CHECK an unknown timeline reference is not a 500:',
+    timelineMissing.status !== 500 && !/Days in the chain/.test(timelineMissingBody),
+    `(${timelineMissing.status})`,
+  );
 
   // the institution report: a PDF behind a staff session, and nothing else
   const reportAnon = await get(BASE + '/api/staff/report/monthly?month=2026-11', { redirect: 'manual' });

@@ -431,6 +431,39 @@ export function startMock(port = 54321) {
         ],
       });
     }
+    // custody timeline (0032): the chain of custody for one item, for its
+    // reporter. Everything else answers the way the function does for a
+    // reference that is not yours — NOT_FOUND, with no steps beside it.
+    if (path === '/rest/v1/rpc/item_custody_timeline') {
+      if (String(json.p_ref ?? '').toUpperCase() !== 'LF-2026-0007') {
+        return send(res, 200, { ok: false, error: 'NOT_FOUND' });
+      }
+      return send(res, 200, {
+        ok: true,
+        access: 'owner',
+        item: {
+          ref: 'LF-2026-0007',
+          title: 'Black wireless earbuds in a charging case',
+          type: 'found',
+          status: 'recovered',
+          category: 'electronics',
+          custodyLabel: 'Main Gate & Security Desk',
+          reportedAt: '2026-11-19T09:12:00+00:00',
+          publishedAt: '2026-11-19T09:12:00+00:00',
+          expiresAt: '2027-02-17T09:12:00+00:00',
+          disposedAt: null,
+          disposition: null,
+        },
+        steps: [
+          { key: 'handed_in', at: '2026-11-19T09:12:00+00:00', count: null },
+          { key: 'published', at: '2026-11-19T09:12:00+00:00', count: null },
+          { key: 'claim_received', at: '2026-11-21T14:30:00+00:00', count: 2 },
+          { key: 'claim_approved', at: '2026-11-22T11:05:00+00:00', count: 1 },
+          { key: 'code_issued', at: '2026-11-22T11:05:00+00:00', count: null },
+          { key: 'handed_over', at: '2026-11-24T16:40:00+00:00', count: null },
+        ],
+      });
+    }
     if (path === '/rest/v1/rpc/log_report_export') {
       return send(res, 200, { ok: true });
     }
