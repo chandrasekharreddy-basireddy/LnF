@@ -56,10 +56,19 @@ const routes = [
 ];
 
 const out = [];
+const failed = [];
 let failures = 0;
 const log = (...a) => {
   const line = a.join(' ');
-  if (line.includes('CHECK') && line.includes('false')) failures += 1;
+  // A check must report a boolean. 'undefined', '0' or an empty value used to
+  // read as a pass; now anything that is not literally true is a failure.
+  if (line.startsWith('CHECK')) {
+    const verdict = a.length > 1 ? a[1] : undefined;
+    if (verdict !== true) {
+      failures += 1;
+      failed.push(`${line}  [reported: ${String(verdict)}]`);
+    }
+  }
   out.push(line);
   try {
     try {
@@ -195,7 +204,9 @@ try {
   log('CHECK sensitive item hides photo:', /No photo shown/.test(sensitive) && !/bottle\.webp/.test(sensitive));
 
   const staff = await get(BASE + '/staff', { redirect: 'manual' });
-  log('CHECK /staff unauthenticated ->', staff.status, staff.headers.get('location'));
+  // a refusal is fine, a 200 that renders the desk is not
+  log('CHECK /staff refuses an unauthenticated visitor ->',
+    staff.status === 307 || /staff access|desk access|sign in/i.test(await staff.text()));
   for (const guarded of ['/staff/scan', '/staff/disposal', '/staff/matches', '/staff/disputes', '/staff/items/LF-2026-0007/label', '/account', '/account/saved', '/messages', '/messages/CLM-2026-0001', '/disputes', '/disputes/DSP-2026-0001', '/staff/import', '/staff/analytics', '/staff/desk', '/items/LF-2026-0007/timeline']) {
     const res = await get(BASE + guarded, { redirect: 'manual' });
     const loc = res.headers.get('location') ?? '';
@@ -306,15 +317,22 @@ try {
       { redirect: 'manual' },
     );
     const location = res.headers.get('location') ?? '';
-    log(`CHECK open redirect blocked (${evil}) ->`, res.status, location.replace(BASE, ''));
+    // compare the path, not the string: the server may answer on localhost
+    // while BASE says 127.0.0.1, and a replace() then strips nothing
+    let landed = '';
+    try { landed = new URL(location).pathname; } catch { landed = ''; }
+    log(`CHECK open redirect blocked (${evil}) ->`,
+      res.status === 307 && !/evil/i.test(location) && landed === '/account');
   }
   const okNext = await get(`${BASE}/auth/confirm?token_hash=abc&type=email&next=%2Fclaims`, {
     redirect: 'manual',
   });
-  log('CHECK safe next still honoured ->', okNext.status, (okNext.headers.get('location') ?? '').replace(BASE, ''));
+  let nextPath = '';
+  try { nextPath = new URL(okNext.headers.get('location') ?? '').pathname; } catch { nextPath = ''; }
+  log('CHECK safe next still honoured ->', okNext.status === 307 && nextPath === '/claims');
 
   const cron = await get(BASE + '/api/cron/housekeeping');
-  log('CHECK cron without bearer ->', cron.status);
+  log('CHECK cron without bearer ->', cron.status === 401);
 
   const pushConfig = await (await get(BASE + '/api/push/config')).json();
   log('CHECK push config is public and disabled without VAPID keys:', pushConfig.enabled === false && pushConfig.publicKey === null);
@@ -327,10 +345,15 @@ try {
   log('CHECK push cron with bearer but no VAPID names the reason ->', pushCronAuthed.status === 503 && pushCronBody.reason === 'VAPID_KEYS_NOT_SET', JSON.stringify(pushCronBody));
 
   const health = await (await get(BASE + '/api/health')).json();
-  log('CHECK health payload:', JSON.stringify(health));
+  log('CHECK health payload:', health.status === 'ok' && health.database === 'reachable');
 
   log('');
   log('DONE');
+  if (failures > 0) {
+    log('');
+    log('FAILED CHECKS:');
+    for (const f of failed) log('  - ' + f);
+  }
   log(failures === 0 ? 'RESULT: all checks passed' : `RESULT: ${failures} CHECK(S) FAILED`);
   log('SERVER ERRORS:', (serverLog.match(/(Error|error)[^\n]{0,160}/g) ?? []).slice(0, 6).join(' || ') || 'none');
 

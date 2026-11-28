@@ -577,6 +577,10 @@ table.data tr:last-child td { border-bottom: 0; }
   :root:not([data-theme="light"]) .chip-quiet { background: var(--surface-3); }
   :root:not([data-theme="light"]) .thread-row:hover { background: var(--surface-2); }
   :root:not([data-theme="light"]) .bubble-mine { background: var(--brand-soft); }
+  /* dark-mode contrast: white on the light dark-mode red/green measured 2.2:1
+     and 2.0:1. Ink on the same fill is 7.4:1 and 8.1:1. */
+  :root:not([data-theme="light"]) .btn-danger { color: #10231a; }
+  :root:not([data-theme="light"]) .skip { color: #10231a; }
 }
 
 /* ---------- c52e26e audit UI & contrast hardening ---------- */
