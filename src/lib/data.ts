@@ -1,5 +1,6 @@
 import { cache } from 'react';
 import { supabaseServer } from './supabase-server';
+import type { ReportSnapshot } from './monthly-report';
 import type {
   BoardStats, ClaimDetail, ClaimSummary, ClaimThread, Conversation, DisputableClaim, DisputeQueueRow,
   DisputeRoom, DisputeSummary, Photo, PublicItem, PublicTrust, SearchResult, SessionUser, SignedPhoto, TrustCounts,
@@ -574,5 +575,48 @@ export async function publicTrust(): Promise<PublicTrust | null> {
     return data as PublicTrust;
   } catch {
     return null;
+  }
+}
+
+// ---------------------------------------------------------------- analytics (0031)
+// The numbers arrive as one jsonb snapshot from a staff-only function. Three
+// outcomes are kept apart on purpose: a refusal (the database said no), a bad
+// range (the caller asked for something that is not a period), and a failure
+// (the board could not answer). Rendering all three as "no data" is how a
+// permission error gets shown as good news.
+
+export type AnalyticsResult =
+  | { ok: true; snapshot: ReportSnapshot }
+  | { ok: false; error: 'RANGE_INVALID' | 'FORBIDDEN' | 'UNAVAILABLE' };
+
+export async function institutionAnalytics(from: string, to: string): Promise<AnalyticsResult> {
+  try {
+    const supabase = await supabaseServer();
+    const { data, error } = await supabase.rpc('institution_analytics', { p_from: from, p_to: to });
+    if (error) return { ok: false, error: 'UNAVAILABLE' };
+    if (!data || typeof data !== 'object' || Array.isArray(data)) return { ok: false, error: 'FORBIDDEN' };
+    const payload = data as { ok?: boolean; error?: string } & ReportSnapshot;
+    if (payload.ok !== true) {
+      return { ok: false, error: payload.error === 'RANGE_INVALID' ? 'RANGE_INVALID' : 'FORBIDDEN' };
+    }
+    return { ok: true, snapshot: payload };
+  } catch {
+    return { ok: false, error: 'UNAVAILABLE' };
+  }
+}
+
+/**
+ * One audit row per download. A false return means the record was not written,
+ * which the route reports in its log but does not use to withhold the file: the
+ * person asking is already staff, and the numbers are already on the page.
+ */
+export async function logReportExport(from: string, to: string): Promise<boolean> {
+  try {
+    const supabase = await supabaseServer();
+    const { data, error } = await supabase.rpc('log_report_export', { p_from: from, p_to: to });
+    if (error) return false;
+    return Boolean(data && typeof data === 'object' && (data as { ok?: boolean }).ok === true);
+  } catch {
+    return false;
   }
 }

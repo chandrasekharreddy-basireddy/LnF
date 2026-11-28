@@ -234,6 +234,51 @@ export function startMock(port = 54321) {
         claimsDecided30d: 12,
       });
     }
+    // institution analytics (0031): a staff-only snapshot. The mock answers as
+    // staff would see it, because the route is what enforces the session here;
+    // the function itself is the guard in the real database.
+    if (path === '/rest/v1/rpc/institution_analytics') {
+      return send(res, 200, {
+        ok: true,
+        from: json.p_from ?? '2026-11-01',
+        to: json.p_to ?? '2026-11-30',
+        days: 30,
+        clamped: false,
+        generatedAt: '2026-11-28T02:00:00+00:00',
+        totals: {
+          handedIn: 6,
+          returned: 2,
+          recoveryRate: 33.3,
+          lowSample: false,
+          medianDaysToRecovery: 3,
+          handovers: 2,
+          awaitingCollection: 1,
+          openOnBoard: 4,
+          lostReports: 1,
+          claimsSubmitted: 2,
+          claimsApproved: 2,
+          claimsRejected: 0,
+          disputesOpened: 1,
+          disputesUpheld: 1,
+        },
+        byZone: [
+          { key: 'library', label: 'Central Library', handedIn: 2, returned: 1, rate: 50, lowSample: true },
+          { key: 'canteen', label: 'Canteen & Food Court', handedIn: 2, returned: 1, rate: 50, lowSample: true },
+          { key: 'sports', label: 'Sports Complex', handedIn: 2, returned: 0, rate: 0, lowSample: true },
+        ],
+        byCategory: [
+          { key: 'electronics', label: 'electronics', handedIn: 2, returned: 1, rate: 50, lowSample: true },
+          { key: 'bags', label: 'bags', handedIn: 2, returned: 1, rate: 50, lowSample: true },
+          { key: 'keys', label: 'keys', handedIn: 2, returned: 0, rate: 0, lowSample: true },
+        ],
+        byMonth: [
+          { key: '2026-11', label: 'Nov 2026', handedIn: 6, returned: 2, handovers: 2, rate: 33.3, lowSample: false },
+        ],
+      });
+    }
+    if (path === '/rest/v1/rpc/log_report_export') {
+      return send(res, 200, { ok: true });
+    }
     if (path === '/rest/v1/rpc/board_stats') {
       return send(res, 200, STATS);
     }

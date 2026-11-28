@@ -49,6 +49,7 @@ and never passes a raw row through. Three rules hold the privacy boundary:
 | Match review | `/staff/matches` → `match_queue(limit)`, which returns null unless `is_staff()` |
 | Dispute | `/disputes` → `open_dispute(claim_ref, reason)`; the room is the claim's own thread. `decide_dispute()` reopens a rejected claim only while the item is still in custody. See [disputes.md](disputes.md) |
 | Trust signals | `claimant_trust(claim_ref)` for staff (counts about one account); `public_trust()` for `/safety` (counts about the desk, never a person) |
+| Analytics | `/staff/analytics` → `institution_analytics(from, to)`, a staff-only cohort snapshot; `/api/staff/report/monthly` turns it into a PDF with no library, and writes one `report_exported` audit row. See [analytics.md](analytics.md) |
 | Theme | a `lnf-theme` cookie read in the layout, so `data-theme` is on `<html>` before first paint |
 
 ## Matching

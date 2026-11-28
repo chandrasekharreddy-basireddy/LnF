@@ -42,11 +42,13 @@ Next.js 16 (App Router) · TypeScript · Postgres/RLS · Supabase Storage · Bre
 | `/staff`, `/staff/items/[ref]` | Desk queue, claim review, handover confirmation, listing controls |
 | `/staff/scan`, `/staff/disposal`, `/staff/items/[ref]/label` | Counter scanner, disposal queue, printable 2×3in custody label |
 | `/staff/matches` | Possible lost↔found pairs, with the title, category, zone, date and photo numbers behind each score |
+| `/staff/analytics` | One month of institution numbers: the cohort recovery rate, by zone, by category, by month |
 | `/account/saved` | Saved items and saved searches |
 | `/admin`, `/admin/users`, `/admin/audit` | Recovery metrics, roles, audit log, sample purge |
 | `/legal/privacy`, `/legal/retention`, `/legal/terms`, `/safety`, `/how-it-works` | The written promises, generated from the same constants the code uses |
 | `/api/health`, `/api/cron/housekeeping`, `/api/cron/push` | Liveness, the daily job, and the push dispatcher |
 | `/api/push/config` | The VAPID public key, or `{enabled:false}` — public and safe |
+| `/api/staff/report/monthly` | The month as a PDF, staff session only, every download audited |
 
 ## Quick start
 
@@ -77,8 +79,8 @@ Admins grant the rest from `/admin/users`.
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run build` | production build |
 | `npm run lint` | ESLint 9 flat config: typescript-eslint, react-hooks, jsx-a11y, no `any` |
-| `npm test` | 105 unit tests over the pure logic: path guard, antifraud scan, code extraction, email escaping, push payloads and WhatsApp links |
-| `npm run smoke` | starts a local mock of the Supabase API, renders 26 routes, asserts content, privacy, CSP, the redirect guard, the push config and the WhatsApp link — and fails the build when a check fails |
+| `npm test` | 199 unit tests over the pure logic: path guard, antifraud scan, code extraction, email escaping, push payloads and WhatsApp links |
+| `npm run smoke` | starts a local mock of the Supabase API, renders 30 routes, asserts content, privacy, CSP, the redirect guard, the push config and the WhatsApp link — and fails the build when a check fails |
 | `npm run e2e` | builds against the mock, then runs Playwright + axe at 360/768/1440 (39 tests) |
 | `npm run shots` | screenshots key pages (needs a browser that can reach localhost) |
 

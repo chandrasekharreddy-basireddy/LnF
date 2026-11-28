@@ -37,6 +37,7 @@ const routes = [
   '/disputes',
   '/staff',
   '/staff/disputes',
+  '/staff/analytics',
   '/staff/scan',
   '/staff/disposal',
   '/staff/items/LF-2026-0007/label',
@@ -190,7 +191,7 @@ try {
 
   const staff = await get(BASE + '/staff', { redirect: 'manual' });
   log('CHECK /staff unauthenticated ->', staff.status, staff.headers.get('location'));
-  for (const guarded of ['/staff/scan', '/staff/disposal', '/staff/matches', '/staff/disputes', '/staff/items/LF-2026-0007/label', '/account', '/account/saved', '/messages', '/messages/CLM-2026-0001', '/disputes', '/disputes/DSP-2026-0001', '/staff/import']) {
+  for (const guarded of ['/staff/scan', '/staff/disposal', '/staff/matches', '/staff/disputes', '/staff/items/LF-2026-0007/label', '/account', '/account/saved', '/messages', '/messages/CLM-2026-0001', '/disputes', '/disputes/DSP-2026-0001', '/staff/import', '/staff/analytics']) {
     const res = await get(BASE + guarded, { redirect: 'manual' });
     const loc = res.headers.get('location') ?? '';
     const body = await res.text();
@@ -198,10 +199,20 @@ try {
     // the redirect to the client in a 200 payload. Both are correct; rendering
     // the staff UI is not.
     const redirected = (res.status === 307 && loc.includes('/sign-in')) || /\/sign-in\?next=/.test(body);
-    const leaked = /Disposal queue|Scan a tag|Saved searches|No pairs waiting|Record the outcome|Ask for a second look/.test(body);
+    const leaked = /Disposal queue|Scan a tag|Saved searches|No pairs waiting|Record the outcome|Ask for a second look|Download the PDF|Recovery rate/.test(body);
     log(`CHECK ${guarded} guarded ->`, redirected && !leaked, `(${res.status})`);
   }
 
+
+  // the institution report: a PDF behind a staff session, and nothing else
+  const reportAnon = await get(BASE + '/api/staff/report/monthly?month=2026-11', { redirect: 'manual' });
+  const reportAnonBody = await reportAnon.text();
+  log('CHECK monthly report needs a session ->', reportAnon.status === 401, `(${reportAnon.status})`);
+  log('CHECK the refusal is text, not a PDF:', !/^%PDF/.test(reportAnonBody) && /sign in/i.test(reportAnonBody));
+  log('CHECK the refusal carries no numbers:', !/handedIn|recoveryRate|Central Library/.test(reportAnonBody));
+
+  const reportBadMonth = await get(BASE + '/api/staff/report/monthly?month=2026-13', { redirect: 'manual' });
+  log('CHECK a bad month is refused before anything is built ->', reportBadMonth.status === 401);
 
   const claims = await (await get(BASE + '/claims')).text();
   log('CHECK /claims asks for sign in:', /Sign in to see the claims/.test(claims));
