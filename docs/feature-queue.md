@@ -14,7 +14,7 @@ green on `main`.
 | 4 | Photo-similarity matching | [x] done — migration 0029, 64-bit dHash on `item_images.phash`, photo term in `refresh_matches()`, `/staff/matches` queue; see `docs/photo-matching.md` |
 | 5 | Claim-proof attachments (redacted) | [ ] needs a product decision — see below |
 | 6 | Dispute room + trust signals | [x] done — migration 0030, `disputes` + `/disputes` + `/staff/disputes`, claimant trust for staff and a person-free dispute record on `/safety`; see `docs/disputes.md`. Upholding reopens a claim only while the item is still in custody. Not yet applied to the live project |
-| 7 | Institution analytics + monthly PDF | [ ] |
+| 7 | Institution analytics + monthly PDF | [x] done — migration 0031, `institution_analytics()` + `log_report_export()`, `/staff/analytics` and a hand-written PDF at `/api/staff/report/monthly`; cohort arithmetic and staff-only access proved against a real Postgres, PDF opened with a real parser. Not yet applied to the live project; see `docs/analytics.md` |
 | 8 | Custody timeline for the owner | [ ] |
 | 9 | PWA + offline desk | [ ] |
 
