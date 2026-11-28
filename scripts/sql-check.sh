@@ -6,6 +6,9 @@ set -euo pipefail
 
 : "${PGURL:?PGURL must point at a scratch database}"
 
+# pgcrypto lives in `extensions`, exactly as it does on Supabase
+export PGOPTIONS='-c search_path=public,extensions'
+
 psql "$PGURL" -v ON_ERROR_STOP=1 -q -f supabase/tests/00_bootstrap.sql
 
 for f in $(ls supabase/migrations/*.sql | sort); do
