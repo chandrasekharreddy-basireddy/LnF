@@ -8,6 +8,9 @@ import { timingSafeEqualString } from '@/lib/http';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
+const CONCURRENCY = 5;
+const BUDGET_MS = 45_000;
+
 type PushBatch = {
   id: string;
   kind: string;
@@ -19,13 +22,8 @@ type PushBatch = {
 };
 
 /**
- * Delivers queued notifications as web push. Bearer-guarded like the
- * housekeeping cron, and service-role only: `claim_push_batch()` and
- * `finish_push()` are granted to `service_role` alone, because they hand out
- * the endpoint and keys of other people's devices.
- *
- * It refuses with a named reason rather than pretending: no VAPID keys, no
- * service key, or a database error all come back as a non-200 with the reason.
+ * Delivers queued notifications as web push with bounded concurrency and an
+ * elapsed-time budget so slow push services never exhaust Vercel's 60s limit.
  */
 export async function GET(request: NextRequest) {
   const auth = request.headers.get('authorization') ?? '';
@@ -42,6 +40,7 @@ export async function GET(request: NextRequest) {
   if (!vapid.ok) {
     return NextResponse.json({ error: 'push is not configured', reason: vapid.reason }, { status: 503 });
   }
+  const vapidKeys = vapid;
 
   const admin = supabaseAdmin();
   if (!admin) {
@@ -55,37 +54,49 @@ export async function GET(request: NextRequest) {
 
   const batches = (Array.isArray(data) ? data : []) as PushBatch[];
   const summary = { claimed: batches.length, sent: 0, failed: 0, skipped: 0, devices: 0, dropped: 0 };
+  const started = Date.now();
 
-  for (const batch of batches) {
-    const targets = Array.isArray(batch.subscriptions) ? batch.subscriptions : [];
-    const payload = pushPayload({
-      id: batch.id,
-      kind: batch.kind,
-      title: batch.title,
-      body: batch.body,
-      link: batch.link,
-    });
+  let cursor = 0;
+  async function worker() {
+    while (cursor < batches.length) {
+      if (Date.now() - started > BUDGET_MS) break;
+      const batch = batches[cursor++];
+      const targets = Array.isArray(batch.subscriptions) ? batch.subscriptions : [];
+      const payload = pushPayload({
+        id: batch.id,
+        kind: batch.kind,
+        title: batch.title,
+        body: batch.body,
+        link: batch.link,
+      });
 
-    const results = targets.length ? await sendPushBatch(targets, payload, vapid) : [];
-    const status = summariseDelivery(results);
-    const gone = results.filter((r) => r.gone).map((r) => r.endpoint);
+      const results = targets.length ? await sendPushBatch(targets, payload, vapidKeys, 5000) : [];
+      const status = summariseDelivery(results);
+      const gone = results.filter((r) => r.gone).map((r) => r.endpoint);
 
-    const finished = await admin.rpc('finish_push', {
-      p_id: batch.id,
-      p_status: status,
-      p_drop_endpoints: gone,
-    });
-    const dropped = Number((finished.data as { dropped?: number } | null)?.dropped ?? 0);
+      const finished = await admin!.rpc('finish_push', {
+        p_id: batch.id,
+        p_status: status,
+        p_drop_endpoints: gone,
+      });
 
-    summary.devices += results.length;
-    summary.dropped += dropped;
-    if (status === 'sent') summary.sent += 1;
-    else if (status === 'failed') summary.failed += 1;
-    else summary.skipped += 1;
+      summary.devices += results.length;
+      if (finished.error) {
+        summary.failed += 1;
+        continue;
+      }
+      const dropped = Number((finished.data as { dropped?: number } | null)?.dropped ?? 0);
+      summary.dropped += dropped;
+      if (status === 'sent') summary.sent += 1;
+      else if (status === 'failed') summary.failed += 1;
+      else summary.skipped += 1;
+    }
   }
+
+  await Promise.all(Array.from({ length: Math.min(CONCURRENCY, batches.length) }, () => worker()));
 
   return NextResponse.json(
     { ok: summary.failed === 0, ...summary, at: new Date().toISOString() },
-    { headers: { 'cache-control': 'no-store' } },
+    { status: summary.failed === 0 ? 200 : 500, headers: { 'cache-control': 'no-store' } },
   );
 }

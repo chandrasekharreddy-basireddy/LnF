@@ -5,9 +5,13 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -39,11 +43,11 @@ jobs:
           # check both, and fail loudly if the scan finds nothing to scan.
           # client bundles only: server code is allowed to name private columns
           files=$(find .next/static -name '*.js' 2>/dev/null | head -400)
-          if [ -z "$files" ]; then echo "guardrail: nothing to scan"; exit 1; fi
-          if grep -lE 'answer_hash|answerHash|finder_contact|finderContact|verification_answer' $files; then
+          if [ "$count" -eq 0 ]; then echo "guardrail: nothing to scan"; exit 1; fi
+          if find .next/static -name '*.js' -print0 | xargs -0 grep -lE 'answer_hash|answerHash|bin_code|binCode|serial_number|serialNumber|finder_contact|finderContact|verification_answer|VAPID_PRIVATE_KEY|SUPABASE_SERVICE_ROLE_KEY|BREVO_API_KEY'; then
             echo "guardrail: a private field name reached the client"; exit 1
           fi
-          echo "guardrail: clean ($(echo "$files" | wc -l) bundles scanned)"
+          echo "guardrail: clean (${count} static bundles scanned)"
 
   e2e:
     runs-on: ubuntu-latest

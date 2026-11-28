@@ -114,7 +114,7 @@ export function CommandPalette({ staff = false }: { staff?: boolean }) {
             <ul>
               {refMatch ? (
                 <li>
-                  <button type="button" onClick={() => go(trimmed.startsWith('CLM') ? `/claims/${trimmed}` : `/items/${trimmed}`)}>
+                  <button type="button" onClick={() => { const u = trimmed.toUpperCase(); go(u.startsWith('CLM') ? `/claims/${u}` : `/items/${u}`); }}>
                     Open {trimmed.toUpperCase()}
                     <span className="kbd">Enter</span>
                   </button>

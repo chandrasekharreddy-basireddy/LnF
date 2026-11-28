@@ -6,9 +6,12 @@ on:
     - cron: '0 3 * * 0'   # Sunday 03:00 UTC
   workflow_dispatch:
 
+permissions: {}
+
 jobs:
   dump:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Install the Postgres client
         run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
@@ -34,7 +37,7 @@ jobs:
           pg_dump "$SUPABASE_DB_URL" --no-owner --no-privileges --clean --if-exists \
             --schema=public | gzip > "backup/lnf-${stamp}.sql.gz"
           # prove it is a real dump before encrypting it
-          gunzip -c "backup/lnf-${stamp}.sql.gz" | grep -q "CREATE TABLE public.items"
+          zgrep -q "CREATE TABLE public.items" "backup/lnf-${stamp}.sql.gz"
           age -r "$BACKUP_AGE_RECIPIENT" -o "backup/lnf-${stamp}.sql.gz.age" "backup/lnf-${stamp}.sql.gz"
           shred -u "backup/lnf-${stamp}.sql.gz" 2>/dev/null || rm -f "backup/lnf-${stamp}.sql.gz"
           ls -lh backup/
@@ -43,4 +46,4 @@ jobs:
         with:
           name: lnf-backup-${{ github.run_id }}
           path: backup/*.sql.gz.age
-          retention-days: 14
+          retention-days: 30

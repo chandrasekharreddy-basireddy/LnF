@@ -5,7 +5,7 @@
  * and must never end up in a client bundle. Imported by the cron route alone.
  */
 import webpush from 'web-push';
-import { isGoneStatus, type PushPayload } from './push';
+import { isAllowedPushEndpoint, isGoneStatus, type PushPayload } from './push';
 
 export type PushTarget = { endpoint: string; p256dh: string; auth: string };
 
@@ -36,6 +36,9 @@ export async function sendPushBatch(
 
   return Promise.all(
     targets.map(async (target): Promise<SendResult> => {
+      if (!isAllowedPushEndpoint(target.endpoint)) {
+        return { endpoint: target.endpoint, ok: false, gone: true, error: 'disallowed push host' };
+      }
       try {
         const res = await webpush.sendNotification(
           { endpoint: target.endpoint, keys: { p256dh: target.p256dh, auth: target.auth } },

@@ -85,13 +85,15 @@ export async function createReport(_prev: ReportState, formData: FormData): Prom
     await processAndUploadPhotos(files, user.id, ref, title);
   }
 
-  await sendOrQueue({
-    to: user.email,
-    mail: templates.itemPublished(ref, title, kind),
+  if (status === 'available') {
+    await sendOrQueue({
+      to: user.email,
+      mail: templates.itemPublished(ref, title, kind),
     eventType: 'item_published',
     payload: { ref, title, kind },
-    dedupeKey: `item_published:${ref}`,
-  });
+      dedupeKey: `item_published:${ref}`,
+    });
+  }
 
   revalidatePath('/browse');
   revalidatePath('/');
@@ -112,7 +114,7 @@ export async function handInFoundItem(_prev: HandInState, formData: FormData): P
   const eventDate = str(formData.get('event_date'));
   const question = clamp(str(formData.get('question')), 200);
   const answer = clamp(str(formData.get('answer')), 200);
-  const finderEmail = str(formData.get('finder_email')).toLowerCase();
+  const finderEmail = clamp(str(formData.get('finder_email')).toLowerCase(), 254);
   const finderPhone = clamp(str(formData.get('finder_phone')), 20);
 
   const fieldErrors: Record<string, string> = {};
@@ -121,6 +123,7 @@ export async function handInFoundItem(_prev: HandInState, formData: FormData): P
   if (!isValidDate(eventDate)) fieldErrors.event_date = 'Pick the date you found it.';
   else if (eventDate > todayISO()) fieldErrors.event_date = 'Use a date today or earlier.';
   if (question.length < 8) fieldErrors.question = 'Ask one question only the owner could answer.';
+  if (finderEmail && !isEmail(finderEmail)) fieldErrors.finder_email = 'Enter a valid email address or leave this blank.';
   if (answer.length < 1) fieldErrors.answer = 'The answer is how the desk checks a claim. It stays private.';
   if (Object.keys(fieldErrors).length) return { ok: false, fieldErrors, error: 'Check the highlighted fields.' };
 

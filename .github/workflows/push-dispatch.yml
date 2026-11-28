@@ -1,0 +1,33 @@
+name: Push Dispatch
+
+# Vercel Hobby allows only daily crons; this workflow drains /api/cron/push every 15 minutes
+# when SITE_URL and CRON_SECRET are configured as repository secrets.
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: push-dispatch
+  cancel-in-progress: false
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Trigger push cron
+        env:
+          SITE_URL: ${{ secrets.SITE_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -euo pipefail
+          if [ -z "$SITE_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "SITE_URL or CRON_SECRET not configured — skipping push dispatch."
+            exit 0
+          fi
+          curl -fsS --max-time 65 \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            "${SITE_URL%/}/api/cron/push"

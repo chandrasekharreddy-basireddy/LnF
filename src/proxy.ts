@@ -43,8 +43,8 @@ function buildCsp(nonce: string, dev: boolean): string {
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'",
-    'upgrade-insecure-requests',
   ];
+  if (!dev) directives.push('upgrade-insecure-requests');
   return directives.join('; ');
 }
 
@@ -92,8 +92,9 @@ export default async function proxy(request: NextRequest) {
 export const config = {
   // /offline.html is excluded on purpose: it is the page served when there is no
   // network, so it carries no nonce and must not depend on a per-request one. It
-  // sets its own strict policy in next.config.ts instead.
+  // sets its own strict policy in next.config.ts instead. /sw.js and the cron
+  // routes are excluded for the same reason: no nonce to give them.
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|icon-|offline\\.html|.*\\.(?:svg|png|jpg|jpeg|webp|ico|txt|xml)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|sw\\.js|api/cron/|icon-|offline\\.html|.*\\.(?:svg|png|jpg|jpeg|webp|ico|txt|xml)$).*)',
   ],
 };

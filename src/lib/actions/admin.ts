@@ -5,7 +5,7 @@ import { supabaseAdmin, supabaseServer } from '@/lib/supabase-server';
 import { currentUser, isAdmin, isStaff } from '@/lib/data';
 import { errorText } from '@/lib/copy';
 import { bool, clamp, str } from '@/lib/validation';
-import { sendEmail, templates } from '@/lib/email';
+import { sendOrQueue, templates } from '@/lib/email';
 
 export type AdminState = { ok: boolean; error?: string; message?: string };
 
@@ -96,7 +96,7 @@ export async function eraseUser(_prev: AdminState, formData: FormData): Promise<
     const { data, error } = await supabase.rpc('admin_erase_user_data', { p_user_id: targetId });
     if (error) return { ok: false, error: 'Could not scrub the records. Nothing was deleted.' };
 
-    const result = data as { ok: boolean; error?: string; photoPaths?: string[] };
+    const result = data as { ok: boolean; error?: string; email?: string | null; photoPaths?: string[] };
     if (!result?.ok) return { ok: false, error: errorText(result?.error) };
 
     const paths = result.photoPaths ?? [];
@@ -124,8 +124,15 @@ export async function eraseUser(_prev: AdminState, formData: FormData): Promise<
       authNote = ' SUPABASE_SERVICE_ROLE_KEY is not set, so the Auth account still exists.';
     }
 
-    if (targetEmail) {
-      await sendEmail({ to: targetEmail, ...templates.erasureConfirmed(targetEmail) });
+    const confirmEmail = (result.email ?? targetEmail).trim().toLowerCase();
+    if (confirmEmail) {
+      await sendOrQueue({
+        to: confirmEmail,
+        mail: templates.erasureConfirmed(confirmEmail),
+        eventType: 'erasure_confirmed',
+        payload: { email: confirmEmail },
+        dedupeKey: `erasure_confirmed:${targetId}`,
+      });
     }
 
     revalidatePath('/admin/users');

@@ -5,7 +5,7 @@ import { supabaseServer } from '@/lib/supabase-server';
 import { currentUser } from '@/lib/data';
 import { errorText } from '@/lib/copy';
 import { scanText } from '@/lib/antifraud';
-import { str } from '@/lib/validation';
+import { safeInternalPath, str } from '@/lib/validation';
 
 export type MessageState = { ok: boolean; error?: string; message?: string };
 
@@ -15,7 +15,8 @@ export async function postMessage(_prev: MessageState, formData: FormData): Prom
 
   const claimRef = str(formData.get('claim_ref'));
   const body = str(formData.get('body'));
-  const backTo = str(formData.get('back_to')) || `/claims/${claimRef}`;
+  const rawBack = safeInternalPath(str(formData.get('back_to')), '');
+  const backTo = /^\/(claims|staff\/items|disputes|messages)\/[A-Z0-9-]+$/i.test(rawBack) ? rawBack : `/claims/${claimRef}`;
 
   if (body.length < 1) return { ok: false, error: errorText('EMPTY') };
   if (body.length > 2000) return { ok: false, error: errorText('TOO_LONG') };

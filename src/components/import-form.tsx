@@ -87,7 +87,7 @@ export function ImportForm() {
           <p className="small" style={{ marginBottom: 8 }}>
             <strong>{good.length}</strong> ready, <strong>{bad.length}</strong> need a fix. First ten:
           </p>
-          <table className="table">
+          <table className="data">
             <thead>
               <tr>
                 <th>Line</th>

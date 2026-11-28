@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { supabaseServer } from '@/lib/supabase-server';
 import { currentUser, isStaff } from '@/lib/data';
 import { errorText } from '@/lib/copy';
-import { clamp, str } from '@/lib/validation';
+import { clamp, isValidDate, str } from '@/lib/validation';
 
 export type ImportState = {
   ok: boolean;
@@ -22,6 +22,7 @@ export async function importRows(_prev: ImportState, formData: FormData): Promis
   const raw = str(formData.get('rows'));
   const note = clamp(str(formData.get('note')), 200);
   if (!raw) return { ok: false, error: 'Nothing to import. Paste the spreadsheet first.' };
+  if (raw.length > 512_000) return { ok: false, error: 'Import payload is too large (max 512 KB). Split the sheet.' };
 
   let rows: unknown;
   try {
@@ -31,6 +32,15 @@ export async function importRows(_prev: ImportState, formData: FormData): Promis
   }
   if (!Array.isArray(rows) || rows.length === 0) return { ok: false, error: 'No rows found.' };
   if (rows.length > 500) return { ok: false, error: 'Import 500 rows at a time. Split the sheet.' };
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i] as Record<string, unknown> | null;
+    if (!r || typeof r !== 'object' || Array.isArray(r)) {
+      return { ok: false, error: `Row ${i + 1} is malformed.` };
+    }
+    if (typeof r.event_date === 'string' && r.event_date && !isValidDate(r.event_date)) {
+      return { ok: false, error: `Row ${i + 1} has an invalid date (${r.event_date}). Fix it before importing.` };
+    }
+  }
 
   try {
     const supabase = await supabaseServer();

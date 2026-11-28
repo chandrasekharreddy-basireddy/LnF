@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { supabaseServer } from '@/lib/supabase-server';
-import { currentUser } from '@/lib/data';
+import { currentUser, isStaff } from '@/lib/data';
 import { errorText } from '@/lib/copy';
 import { scanText } from '@/lib/antifraud';
 import { clamp, str } from '@/lib/validation';
@@ -91,7 +91,7 @@ export async function withdrawDispute(_prev: DisputeState, formData: FormData): 
  */
 export async function decideDispute(_prev: DisputeState, formData: FormData): Promise<DisputeState> {
   const user = await currentUser();
-  if (!user) return { ok: false, error: 'Sign in first.' };
+  if (!isStaff(user)) return { ok: false, error: 'Staff access only.' };
 
   const disputeRef = str(formData.get('dispute_ref'));
   const decision = str(formData.get('decision'));

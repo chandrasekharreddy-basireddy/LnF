@@ -578,3 +578,25 @@ table.data tr:last-child td { border-bottom: 0; }
   :root:not([data-theme="light"]) .thread-row:hover { background: var(--surface-2); }
   :root:not([data-theme="light"]) .bubble-mine { background: var(--brand-soft); }
 }
+
+/* ---------- c52e26e audit UI & contrast hardening ---------- */
+.split > *, .grid > *, .stack > *, .stack-lg > * { min-width: 0; }
+.kv dd, .kv .v { min-width: 0; overflow-wrap: anywhere; }
+
+:root[data-theme="dark"] .btn-danger { color: #2b0a08; }
+:root[data-theme="dark"] .timeline li.done .node { color: #10231a; }
+:root[data-theme="dark"] .skip:focus { color: #10231a; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .btn-danger { color: #2b0a08; }
+  :root:not([data-theme="light"]) .timeline li.done .node { color: #10231a; }
+  :root:not([data-theme="light"]) .skip:focus { color: #10231a; }
+  :root:not([data-theme="light"]) .theme-switch button[aria-pressed="true"] { color: #10231a; }
+}
+
+@media (max-width: 719px) {
+  .site-header { position: static; }
+}
+
+@media (max-width: 480px) {
+  .kv div { grid-template-columns: 1fr; gap: 2px; }
+}

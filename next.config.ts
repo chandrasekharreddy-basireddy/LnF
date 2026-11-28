@@ -4,18 +4,15 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   experimental: {
     serverActions: {
-      // phone photos are 2-4 MB; the default 1 MB rejects them before the
-      // action runs, with an error nobody can act on
-      bodySizeLimit: '16mb',
+      // Matches Vercel's 4.5 MB serverless cap; client-side compression keeps photos <= 3.8 MB
+      bodySizeLimit: '4mb',
     },
   },
   reactStrictMode: true,
-  serverExternalPackages: ['sharp'],
+  serverExternalPackages: ['sharp', 'web-push'],
   async headers() {
     return [
       {
-        // non-HTML responses (sitemap, robots, manifest) get a locked-down
-        // baseline; pages get the nonce policy from src/proxy.ts
         source: '/:path*.xml',
         headers: [{ key: 'Content-Security-Policy', value: "default-src 'none'; style-src 'unsafe-inline'" }],
       },
@@ -34,6 +31,17 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        source: '/:path*.txt',
+        headers: [{ key: 'Content-Security-Policy', value: "default-src 'none'" }],
+      },
+      {
+        source: '/sw.js',
+        headers: [
+          { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
+          { key: 'Content-Security-Policy', value: "default-src 'self'" },
+        ],
+      },
+      {
         source: '/:path*',
         headers: [
           { key: 'X-Content-Type-Options', value: 'nosniff' },
@@ -42,6 +50,14 @@ const nextConfig: NextConfig = {
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
           { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
         ],
+      },
+      {
+        source: '/staff/scan',
+        headers: [{ key: 'Permissions-Policy', value: 'camera=(self), microphone=(), geolocation=()' }],
+      },
+      {
+        source: '/staff/scan/:path*',
+        headers: [{ key: 'Permissions-Policy', value: 'camera=(self), microphone=(), geolocation=()' }],
       },
     ];
   },

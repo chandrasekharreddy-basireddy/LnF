@@ -79,17 +79,16 @@ export async function verifyOtp(_prev: AuthState, formData: FormData): Promise<A
 
   try {
     const supabase = await supabaseServer();
-    const { error } = await supabase.auth.verifyOtp({ email, token, type: 'email' });
+    const { data: authData, error } = await supabase.auth.verifyOtp({ email, token, type: 'email' });
     if (error) {
       await logAuthEvent('code_failed', email);
       return { step: 'otp', email, error: 'That code is wrong or has expired. Request a new one.' };
     }
 
     // The code proved the address. Record that, and greet a new account once.
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('full_name,email_verified_at')
-      .maybeSingle();
+    const { data: profile } = authData.user?.id
+      ? await supabase.from('profiles').select('full_name,email_verified_at').eq('id', authData.user.id).maybeSingle()
+      : { data: null };
     firstTime = !profile?.email_verified_at;
     name = (profile?.full_name as string | null) ?? null;
 

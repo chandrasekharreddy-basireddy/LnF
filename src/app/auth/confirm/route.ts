@@ -38,10 +38,9 @@ export async function GET(request: NextRequest) {
 
     email = data.user?.email ?? null;
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('full_name, email_verified_at')
-      .maybeSingle();
+    const { data: profile } = data.user?.id
+      ? await supabase.from('profiles').select('full_name, email_verified_at').eq('id', data.user.id).maybeSingle()
+      : { data: null };
     firstTime = !profile?.email_verified_at;
     name = (profile?.full_name as string | null) ?? null;
 

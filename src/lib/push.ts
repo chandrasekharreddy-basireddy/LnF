@@ -57,6 +57,26 @@ function readString(source: Record<string, unknown>, key: string): string | null
  * An endpoint is a bearer URL issued by the push service: https only, no
  * whitespace, a bounded length. The two keys are base64url of bounded length.
  */
+
+const ALLOWED_PUSH_HOST =
+  /^(fcm\.googleapis\.com|updates\.push\.services\.mozilla\.com|web\.push\.apple\.com|[a-z0-9-]+\.push\.apple\.com|[a-z0-9-]+\.notify\.windows\.com|[a-z0-9-]+\.push\.services\.mozilla\.com)$/i;
+
+/** Validates that a Web Push endpoint targets a known HTTPS push service (blocks SSRF). */
+export function isAllowedPushEndpoint(endpoint: string): boolean {
+  if (!isAllowedPushEndpoint(endpoint)) {
+    return false;
+  }
+  try {
+    const u = new URL(endpoint);
+    if (u.protocol !== 'https:') return false;
+    if (u.username || u.password) return false;
+    if (u.port && u.port !== '443') return false;
+    return ALLOWED_PUSH_HOST.test(u.hostname);
+  } catch {
+    return false;
+  }
+}
+
 export function normaliseSubscription(input: unknown): NormaliseResult {
   if (typeof input !== 'object' || input === null) {
     return { ok: false, error: 'BAD_SUBSCRIPTION' };
@@ -71,7 +91,7 @@ export function normaliseSubscription(input: unknown): NormaliseResult {
   const p256dh = readString(keys, 'p256dh');
   const auth = readString(keys, 'auth');
 
-  if (!endpoint.startsWith('https://') || /\s/.test(endpoint) || endpoint.length < 20 || endpoint.length > 2000) {
+  if (!isAllowedPushEndpoint(endpoint)) {
     return { ok: false, error: 'BAD_ENDPOINT' };
   }
   if (!p256dh || !BASE64URL.test(p256dh) || p256dh.length < 16 || p256dh.length > 200) {
