@@ -136,3 +136,89 @@ export type ClaimThread = {
   unread: number;
   messages: ClaimMessage[];
 };
+
+// ---------------------------------------------------------------- disputes (0030)
+
+export type DisputeStatus = 'open' | 'upheld' | 'dismissed' | 'withdrawn';
+
+/** Counts about one person's history. Staff-only; never rendered publicly. */
+export type TrustCounts = {
+  claimsTotal: number | null;
+  approved: number | null;
+  rejected: number | null;
+  handovers: number | null;
+  disputesOpened: number | null;
+  disputesUpheld: number | null;
+  accountAgeDays: number | null;
+};
+
+export type DisputeSummary = {
+  ref: string;
+  claimRef: string;
+  itemRef: string;
+  itemTitle: string;
+  status: DisputeStatus;
+  openerRole: 'claimant' | 'finder';
+  mine: boolean;
+  claimStatus: string;
+  reopened: boolean;
+  createdAt: string;
+  decidedAt: string | null;
+};
+
+export type DisputableClaim = {
+  claimRef: string;
+  itemRef: string;
+  itemTitle: string;
+  role: 'claimant' | 'finder';
+  claimStatus: string;
+  itemStatus: string;
+  decidedAt: string;
+  daysLeft: number;
+};
+
+export type DisputeRoom = {
+  ref: string;
+  status: DisputeStatus;
+  reason: string;
+  openerRole: 'claimant' | 'finder';
+  outcomeNote: string | null;
+  reopened: boolean;
+  createdAt: string;
+  decidedAt: string | null;
+  role: 'claimant' | 'finder' | 'staff';
+  canWithdraw: boolean;
+  claimRef: string;
+  claimStatus: string;
+  claimDecisionReason: string | null;
+  claimDecidedAt: string | null;
+  itemRef: string;
+  itemTitle: string;
+  itemStatus: string;
+  itemCustody: string | null;
+};
+
+export type DisputeQueueRow = {
+  ref: string;
+  claimRef: string;
+  itemRef: string;
+  itemTitle: string;
+  itemStatus: string;
+  claimStatus: string;
+  openerRole: 'claimant' | 'finder';
+  reason: string;
+  createdAt: string;
+  ageDays: number;
+  claimant: string;
+  claimantEmail: string | null;
+  trust: TrustCounts;
+};
+
+export type PublicTrust = {
+  disputesOpened: number;
+  disputesResolved: number;
+  disputesUpheld: number;
+  openDisputes: number;
+  medianResolutionDays: number | null;
+  claimsDecided30d: number;
+};

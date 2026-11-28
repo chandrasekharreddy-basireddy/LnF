@@ -75,6 +75,12 @@ export const ERRORS: Record<string, string> = {
   BAD_KEY: 'That browser sent a subscription we could not verify.',
   BAD_SUBSCRIPTION: 'That browser sent a subscription we could not verify.',
   PUSH_NOT_CONFIGURED: 'Push is not configured on this deployment.',
+  REASON_TOO_SHORT: 'Explain what the desk should look at, in at least 20 characters.',
+  NOT_DECIDED: 'The desk has not decided this claim yet, so there is nothing to contest.',
+  WINDOW_CLOSED:
+    'A decision can be contested for 14 days. This one is past that window — reply on the thread or contact the desk.',
+  DISPUTE_EXISTS: 'This claim already has a dispute. Follow it from your disputes list.',
+  BAD_DECISION_DISPUTE: 'Choose uphold or dismiss.',
 };
 
 export function errorText(code: string | undefined): string {
@@ -111,4 +117,7 @@ export const STATUS_LABEL: Record<string, string> = {
   approved: 'Approved',
   rejected: 'Not approved',
   withdrawn: 'Withdrawn',
+  upheld: 'Upheld',
+  dismissed: 'Dismissed',
+  open: 'With the desk',
 };

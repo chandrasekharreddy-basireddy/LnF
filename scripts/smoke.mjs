@@ -34,7 +34,9 @@ const routes = [
   '/legal/terms',
   '/sign-in',
   '/claims',
+  '/disputes',
   '/staff',
+  '/staff/disputes',
   '/staff/scan',
   '/staff/disposal',
   '/staff/items/LF-2026-0007/label',
@@ -188,7 +190,7 @@ try {
 
   const staff = await get(BASE + '/staff', { redirect: 'manual' });
   log('CHECK /staff unauthenticated ->', staff.status, staff.headers.get('location'));
-  for (const guarded of ['/staff/scan', '/staff/disposal', '/staff/matches', '/staff/items/LF-2026-0007/label', '/account', '/account/saved', '/messages', '/messages/CLM-2026-0001', '/staff/import']) {
+  for (const guarded of ['/staff/scan', '/staff/disposal', '/staff/matches', '/staff/disputes', '/staff/items/LF-2026-0007/label', '/account', '/account/saved', '/messages', '/messages/CLM-2026-0001', '/disputes', '/disputes/DSP-2026-0001', '/staff/import']) {
     const res = await get(BASE + guarded, { redirect: 'manual' });
     const loc = res.headers.get('location') ?? '';
     const body = await res.text();
@@ -196,13 +198,28 @@ try {
     // the redirect to the client in a 200 payload. Both are correct; rendering
     // the staff UI is not.
     const redirected = (res.status === 307 && loc.includes('/sign-in')) || /\/sign-in\?next=/.test(body);
-    const leaked = /Disposal queue|Scan a tag|Saved searches|No pairs waiting/.test(body);
+    const leaked = /Disposal queue|Scan a tag|Saved searches|No pairs waiting|Record the outcome|Ask for a second look/.test(body);
     log(`CHECK ${guarded} guarded ->`, redirected && !leaked, `(${res.status})`);
   }
 
 
   const claims = await (await get(BASE + '/claims')).text();
   log('CHECK /claims asks for sign in:', /Sign in to see the claims/.test(claims));
+
+  const disputes = await (await get(BASE + '/disputes', { redirect: 'manual' })).text();
+  log(
+    'CHECK /disputes asks for sign in, and explains the window before it does:',
+    /Sign in/.test(disputes) || /\/sign-in\?next=\/disputes/.test(disputes),
+  );
+
+  // React separates adjacent text nodes with <!-- -->; compare the words, not the markup
+  const safety = (await (await get(BASE + '/safety')).text()).replace(/<!-- -->/g, '');
+  log('CHECK /safety explains the dispute room:', /ask for a second look/i.test(safety));
+  log(
+    'CHECK /safety publishes the desk\'s dispute record:',
+    /3<\/strong> disputes raised/.test(safety) && /typically within 4 days/.test(safety) && /1<\/strong> upheld/.test(safety),
+  );
+  log('CHECK /safety shows no person-level trust data:', !/disputesUpheld|claimantEmail|accountAgeDays/i.test(safety));
 
   for (const evil of ['//evil.com', 'https://evil.com', '/\\evil.com']) {
     const res = await get(

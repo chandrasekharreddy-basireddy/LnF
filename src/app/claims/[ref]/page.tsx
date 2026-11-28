@@ -132,6 +132,18 @@ export default async function ClaimPage({
         </aside>
       </div>
 
+      {claim.status === 'rejected' || claim.status === 'approved' ? (
+        <div className="banner banner-info" style={{ marginTop: 28 }}>
+          <div>
+            <strong>Think this decision was wrong?</strong>
+            <div className="small">
+              You can ask the desk for a second look for 14 days after a decision.{' '}
+              <Link href="/disputes">Open a dispute</Link> — it stays on the record and is answered with a reason.
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <div style={{ marginTop: 28 }}>
         <ClaimThreadPanel thread={thread} claimRef={claim.ref} />
       </div>

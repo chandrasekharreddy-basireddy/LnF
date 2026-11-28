@@ -213,6 +213,27 @@ export function startMock(port = 54321) {
     if (path === '/rest/v1/rpc/claim_thread') {
       return send(res, 200, null);
     }
+    // disputes (0030): empty lists for a signed-out visitor, and a public record
+    // with numbers in it so /safety renders the block rather than hiding it
+    if (path === '/rest/v1/rpc/my_disputes' || path === '/rest/v1/rpc/my_disputable_claims') {
+      return send(res, 200, []);
+    }
+    if (path === '/rest/v1/rpc/dispute_queue') {
+      return send(res, 200, []);
+    }
+    if (path === '/rest/v1/rpc/dispute_room' || path === '/rest/v1/rpc/claimant_trust') {
+      return send(res, 200, null);
+    }
+    if (path === '/rest/v1/rpc/public_trust') {
+      return send(res, 200, {
+        disputesOpened: 3,
+        disputesResolved: 2,
+        disputesUpheld: 1,
+        openDisputes: 1,
+        medianResolutionDays: 4,
+        claimsDecided30d: 12,
+      });
+    }
     if (path === '/rest/v1/rpc/board_stats') {
       return send(res, 200, STATS);
     }

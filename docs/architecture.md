@@ -47,6 +47,8 @@ and never passes a raw row through. Three rules hold the privacy boundary:
 | Saved | `saved_items` / `saved_searches`; `run_saved_searches()` runs inside housekeeping and sends one notification per run |
 | Photo hash | `processAndUploadPhotos` → `dhashFromImage` → `set_item_photo_hash(path, hash)` → `recompute_item_matches(ref)` |
 | Match review | `/staff/matches` → `match_queue(limit)`, which returns null unless `is_staff()` |
+| Dispute | `/disputes` → `open_dispute(claim_ref, reason)`; the room is the claim's own thread. `decide_dispute()` reopens a rejected claim only while the item is still in custody. See [disputes.md](disputes.md) |
+| Trust signals | `claimant_trust(claim_ref)` for staff (counts about one account); `public_trust()` for `/safety` (counts about the desk, never a person) |
 | Theme | a `lnf-theme` cookie read in the layout, so `data-theme` is on `<html>` before first paint |
 
 ## Matching

@@ -2,10 +2,13 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { env } from '@/lib/env';
 import { SafetyNote } from '@/components/safety-note';
+import { publicTrust } from '@/lib/data';
 
+export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Safety', description: 'How to collect an item without getting scammed.' };
 
-export default function SafetyPage() {
+export default async function SafetyPage() {
+  const trust = await publicTrust();
   return (
     <article className="section" style={{ marginTop: 8, maxWidth: 720 }}>
       <p className="eyebrow">Safety</p>
@@ -50,6 +53,29 @@ export default function SafetyPage() {
         Do not photograph it and do not list it. Hand it straight to the desk. Those items are held without a public
         listing, and the desk contacts the issuing authority.
       </p>
+
+      <h2>When you think the desk got it wrong</h2>
+      <p>
+        A claim is decided by a person, so it can be decided wrongly. For 14 days after a decision the claimant — or
+        the finder, if the item has already gone out — can ask for a second look in the dispute room. Every dispute is
+        answered with a reason on the record, and the outcome is counted here.
+      </p>
+      {trust ? (
+        <div className="card card-tight" style={{ margin: '12px 0 24px' }}>
+          <p className="small" style={{ margin: 0 }}>
+            <strong>{trust.disputesOpened}</strong> dispute{trust.disputesOpened === 1 ? '' : 's'} raised ·{' '}
+            <strong>{trust.disputesResolved}</strong> answered
+            {trust.medianResolutionDays !== null ? `, typically within ${trust.medianResolutionDays} day${trust.medianResolutionDays === 1 ? '' : 's'}` : ''}
+            {' · '}
+            <strong>{trust.disputesUpheld}</strong> upheld, meaning the first decision was changed
+            {trust.openDisputes > 0 ? ` · ${trust.openDisputes} still with the desk` : ''}.
+          </p>
+          <p className="small muted" style={{ margin: '6px 0 0' }}>
+            These are counts about the desk, never about a person. Who disputed what stays between the people on that
+            claim.
+          </p>
+        </div>
+      ) : null}
 
       <p style={{ marginTop: 24 }}>
         <Link className="btn btn-secondary" href="/browse">

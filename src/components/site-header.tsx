@@ -30,6 +30,7 @@ export function SiteHeader({ user, unread = 0 }: { user: SessionUser | null; unr
               {unread > 0 ? <span className="chip chip-ok" style={{ marginLeft: 6 }}>{unread}</span> : null}
             </Link>
           ) : null}
+          {user ? <Link href="/disputes">Disputes</Link> : null}
           {isStaff(user) ? <Link href="/staff">Desk</Link> : null}
           {user?.roles.includes('admin') ? <Link href="/admin">Admin</Link> : null}
           {user ? (

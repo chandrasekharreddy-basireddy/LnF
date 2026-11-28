@@ -55,6 +55,9 @@ export default async function StaffPage() {
           <Link className="btn btn-secondary btn-sm" href="/staff/matches">
             Possible matches
           </Link>
+          <Link className="btn btn-secondary btn-sm" href="/staff/disputes">
+            Disputes
+          </Link>
           <Link className="btn btn-secondary btn-sm" href="/staff/disposal">
             Disposal queue
           </Link>

@@ -1,7 +1,8 @@
 import { cache } from 'react';
 import { supabaseServer } from './supabase-server';
 import type {
-  BoardStats, ClaimDetail, ClaimSummary, ClaimThread, Conversation, Photo, PublicItem, SearchResult, SessionUser, SignedPhoto,
+  BoardStats, ClaimDetail, ClaimSummary, ClaimThread, Conversation, DisputableClaim, DisputeQueueRow,
+  DisputeRoom, DisputeSummary, Photo, PublicItem, PublicTrust, SearchResult, SessionUser, SignedPhoto, TrustCounts,
 } from './types';
 
 export type SearchParams = {
@@ -495,5 +496,83 @@ export async function openReports() {
     return (data ?? []) as { id: string; reason: string; details: string | null; status: string; at: string; itemRef: string | null; itemTitle: string | null }[];
   } catch {
     return [];
+  }
+}
+
+// ---------------------------------------------------------------- disputes (0030)
+// Every read here returns a typed shape or a null that the page can tell apart
+// from "empty": a null from dispute_queue() means "not staff", and an empty list
+// means "staff, nothing waiting". Rendering those two the same way is how a
+// permission failure gets shown as good news.
+
+export async function myDisputes(): Promise<DisputeSummary[]> {
+  try {
+    const supabase = await supabaseServer();
+    const { data, error } = await supabase.rpc('my_disputes');
+    if (error || !Array.isArray(data)) return [];
+    return data as DisputeSummary[];
+  } catch {
+    return [];
+  }
+}
+
+export async function myDisputableClaims(): Promise<DisputableClaim[]> {
+  try {
+    const supabase = await supabaseServer();
+    const { data, error } = await supabase.rpc('my_disputable_claims');
+    if (error || !Array.isArray(data)) return [];
+    return data as DisputableClaim[];
+  } catch {
+    return [];
+  }
+}
+
+/** null means "not yours, or not there" — the page answers both with notFound(). */
+export async function disputeRoom(ref: string): Promise<DisputeRoom | null> {
+  try {
+    const supabase = await supabaseServer();
+    const { data, error } = await supabase.rpc('dispute_room', { p_ref: ref });
+    if (error) return null;
+    if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
+    return data as DisputeRoom;
+  } catch {
+    return null;
+  }
+}
+
+/** null means "not staff". An empty array is a staff member with nothing waiting. */
+export async function disputeQueue(limit = 50): Promise<DisputeQueueRow[] | null> {
+  try {
+    const supabase = await supabaseServer();
+    const { data, error } = await supabase.rpc('dispute_queue', { p_limit: limit });
+    if (error || !Array.isArray(data)) return null;
+    return data as DisputeQueueRow[];
+  } catch {
+    return null;
+  }
+}
+
+export async function claimantTrust(claimRef: string): Promise<TrustCounts | null> {
+  try {
+    const supabase = await supabaseServer();
+    const { data, error } = await supabase.rpc('claimant_trust', { p_claim_ref: claimRef });
+    if (error) return null;
+    if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
+    return data as TrustCounts;
+  } catch {
+    return null;
+  }
+}
+
+/** Public and person-free. Null when the board cannot answer, so the block is hidden. */
+export async function publicTrust(): Promise<PublicTrust | null> {
+  try {
+    const supabase = await supabaseServer();
+    const { data, error } = await supabase.rpc('public_trust');
+    if (error) return null;
+    if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
+    return data as PublicTrust;
+  } catch {
+    return null;
   }
 }
