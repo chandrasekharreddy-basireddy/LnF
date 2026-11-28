@@ -9,6 +9,25 @@ permissions:
   contents: read
 
 jobs:
+  sql:
+    name: Migrations against a real Postgres
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: lnf
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply every migration and assert
+        env:
+          PGURL: postgresql://postgres:postgres@localhost:5432/lnf
+        run: bash scripts/sql-check.sh
+
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 15

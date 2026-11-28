@@ -125,6 +125,16 @@ export async function GET(request: NextRequest) {
   const summary = (data ?? {}) as Summary;
   const email = await dispatchOutbox(admin);
   const storage = await drainStorageQueue(admin);
+
+  // matches only exist as in-app notifications unless something queues the mail
+  let matches = { queued: 0, note: '' as string };
+  try {
+    const { data: matchResult, error: matchError } = await admin.rpc('queue_match_alerts', { p_limit: 25 });
+    if (matchError) matches = { queued: 0, note: matchError.message };
+    else matches = { queued: Number((matchResult as { queued?: number })?.queued ?? 0), note: '' };
+  } catch {
+    matches = { queued: 0, note: 'unreachable' };
+  }
   const paths = summary.photoPaths ?? [];
   let photosDeleted = 0;
 
@@ -147,6 +157,7 @@ export async function GET(request: NextRequest) {
       outboxDeleted: summary.outboxDeleted ?? 0,
       email,
       storage,
+      matches,
       at: new Date().toISOString(),
     },
     { headers: { 'cache-control': 'no-store' } },
