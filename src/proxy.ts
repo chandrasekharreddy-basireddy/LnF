@@ -36,6 +36,9 @@ function buildCsp(nonce: string, dev: boolean): string {
     `img-src 'self' data: blob:${origin ? ` ${origin}` : ''}`,
     "font-src 'self' data:",
     `connect-src 'self'${origin ? ` ${origin}` : ''}`,
+    // the worker that keeps the app installable and serves the offline page
+    "worker-src 'self'",
+    "manifest-src 'self'",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
@@ -87,5 +90,10 @@ export default async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|icon-|.*\\.(?:svg|png|jpg|jpeg|webp|ico|txt|xml)$).*)'],
+  // /offline.html is excluded on purpose: it is the page served when there is no
+  // network, so it carries no nonce and must not depend on a per-request one. It
+  // sets its own strict policy in next.config.ts instead.
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|icon-|offline\\.html|.*\\.(?:svg|png|jpg|jpeg|webp|ico|txt|xml)$).*)',
+  ],
 };

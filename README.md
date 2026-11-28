@@ -27,6 +27,8 @@ Next.js 16 (App Router) · TypeScript · Postgres/RLS · Supabase Storage · Bre
 | A wrong claim answer teaches nothing | answer compared as a hash; the claimant never sees whether it matched |
 | A push subscription cannot be hijacked or read | `push_subscriptions` RLS + `register_push_subscription()` takes `auth.uid()`, never an argument; no write grant exists |
 | A photo hash can only be written by the person who uploaded the photo | column-level `INSERT` grant on `item_images` excludes `phash`; `set_item_photo_hash()` checks the path's owner and the listing |
+| An offline copy carries nothing that was not already public | `desk_sheet()` projects a public-safe column list for staff only; the stored sheet is re-validated on every read and expires after a day |
+| The board never answers from a cache | `public/sw-policy.js` — only `/_next/static/*`, icons and `/offline.html` are cacheable; every page and API response is network-only |
 
 ## Routes
 
@@ -43,6 +45,8 @@ Next.js 16 (App Router) · TypeScript · Postgres/RLS · Supabase Storage · Bre
 | `/staff/scan`, `/staff/disposal`, `/staff/items/[ref]/label` | Counter scanner, disposal queue, printable 2×3in custody label |
 | `/staff/matches` | Possible lost↔found pairs, with the title, category, zone, date and photo numbers behind each score |
 | `/staff/analytics` | One month of institution numbers: the cohort recovery rate, by zone, by category, by month |
+| `/staff/desk` | The board as a sheet the counter can keep in the browser, for when the gate wifi drops |
+| `/offline.html` | The page the service worker serves when a navigation fails: the saved sheet, its age, and what it must never be used for |
 | `/account/saved` | Saved items and saved searches |
 | `/admin`, `/admin/users`, `/admin/audit` | Recovery metrics, roles, audit log, sample purge |
 | `/legal/privacy`, `/legal/retention`, `/legal/terms`, `/safety`, `/how-it-works` | The written promises, generated from the same constants the code uses |
@@ -79,8 +83,8 @@ Admins grant the rest from `/admin/users`.
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run build` | production build |
 | `npm run lint` | ESLint 9 flat config: typescript-eslint, react-hooks, jsx-a11y, no `any` |
-| `npm test` | 199 unit tests over the pure logic: path guard, antifraud scan, code extraction, email escaping, push payloads and WhatsApp links |
-| `npm run smoke` | starts a local mock of the Supabase API, renders 30 routes, asserts content, privacy, CSP, the redirect guard, the push config and the WhatsApp link — and fails the build when a check fails |
+| `npm test` | 258 unit tests over the pure logic: path guard, antifraud scan, code extraction, email escaping, push payloads, WhatsApp links, the custody timeline, the desk sheet and the worker's cache policy |
+| `npm run smoke` | starts a local mock of the Supabase API, renders 35 routes, asserts content, privacy, CSP, the redirect guard, the push config, the WhatsApp link, the offline page and the manifest — and fails the build when a check fails |
 | `npm run e2e` | builds against the mock, then runs Playwright + axe at 360/768/1440 (39 tests) |
 | `npm run shots` | screenshots key pages (needs a browser that can reach localhost) |
 

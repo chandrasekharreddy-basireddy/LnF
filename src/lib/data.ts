@@ -2,6 +2,7 @@ import { cache } from 'react';
 import { supabaseServer } from './supabase-server';
 import type { ReportSnapshot } from './monthly-report';
 import type { CustodyPayload } from './custody';
+import type { DeskSheetPayload } from './offline';
 import type {
   BoardStats, ClaimDetail, ClaimSummary, ClaimThread, Conversation, DisputableClaim, DisputeQueueRow,
   DisputeRoom, DisputeSummary, Photo, PublicItem, PublicTrust, SearchResult, SessionUser, SignedPhoto, TrustCounts,
@@ -633,6 +634,22 @@ export async function custodyTimeline(ref: string): Promise<CustodyPayload | nul
     const { data, error } = await supabase.rpc('item_custody_timeline', { p_ref: ref });
     if (error || !data || typeof data !== 'object') return null;
     const payload = data as CustodyPayload;
+    return payload.ok === true ? payload : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The board, as a sheet the desk can keep offline. Staff only — the function
+ * behind this returns NOT_STAFF (and null here) for anyone else.
+ */
+export async function deskSheet(limit = 300): Promise<DeskSheetPayload | null> {
+  try {
+    const supabase = await supabaseServer();
+    const { data, error } = await supabase.rpc('desk_sheet', { p_limit: limit });
+    if (error || !data || typeof data !== 'object') return null;
+    const payload = data as DeskSheetPayload;
     return payload.ok === true ? payload : null;
   } catch {
     return null;

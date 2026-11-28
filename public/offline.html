@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en-IN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, follow" />
+    <title>Offline · L&amp;F</title>
+    <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+    <style>
+      :root { color-scheme: light dark; }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0; padding: 24px 16px 64px;
+        font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        background: #fbfbf8; color: #1c1f1e;
+      }
+      .wrap { max-width: 860px; margin: 0 auto; }
+      h1 { font-size: 1.55rem; line-height: 1.2; margin: 8px 0 4px; }
+      h2 { font-size: 1.1rem; margin: 28px 0 8px; }
+      p { margin: 6px 0; }
+      .muted { color: #5b6360; }
+      .small { font-size: 0.86rem; }
+      .eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.72rem; color: #14524b; margin: 0; }
+      .card { background: #fff; border: 1px solid #dfe3e0; border-radius: 12px; padding: 16px; margin-top: 14px; }
+      .warn { border-color: #d9a441; background: #fffaf0; }
+      .btn {
+        display: inline-block; padding: 9px 14px; border-radius: 9px; text-decoration: none;
+        background: #14524b; color: #fff; font-weight: 600; font-size: 0.92rem;
+      }
+      .btn-secondary { background: #fff; color: #14524b; border: 1px solid #14524b; }
+      label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 6px; }
+      input[type="search"] {
+        width: 100%; padding: 11px 12px; font-size: 1rem; border: 1px solid #b9c1bd; border-radius: 9px;
+        background: #fff; color: inherit;
+      }
+      table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.92rem; }
+      th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #e6e9e7; vertical-align: top; }
+      th { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: #5b6360; }
+      code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+      .hidden { display: none; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <p class="eyebrow">L&amp;F</p>
+      <h1>You are offline</h1>
+      <p class="muted">
+        The board needs the network: a listing that was true an hour ago may not be true now, and a stale board is a
+        wrong answer. This page is the one thing that still works.
+      </p>
+
+      <div class="card">
+        <h2 style="margin-top: 0">If you are at the counter</h2>
+        <p class="small muted">
+          A sheet saved from the desk page is stored in this browser only. It carries the reference, title, category
+          and where each item was found — the same facts the public board shows. It says nothing about who reported an
+          item, and nothing about a claim.
+        </p>
+        <div id="sheet-state" class="small" role="status" aria-live="polite">Looking for a saved sheet…</div>
+        <div id="sheet-body" class="hidden">
+          <div style="margin-top: 12px">
+            <label for="sheet-search">Find a reference or a word from the title</label>
+            <input id="sheet-search" type="search" autocomplete="off" spellcheck="false" placeholder="0007, earbuds, library" />
+          </div>
+          <p id="sheet-count" class="small muted" style="margin-top: 8px"></p>
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Reference</th>
+                <th scope="col">Item</th>
+                <th scope="col">Found at</th>
+              </tr>
+            </thead>
+            <tbody id="sheet-rows"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card warn">
+        <h2 style="margin-top: 0">What to do next</h2>
+        <p class="small">
+          Wait for the signal to come back and reload. If someone is standing at the counter, the saved sheet answers
+          &ldquo;is this on the board?&rdquo; — it does not approve a collection. A handover still needs the network,
+          the code and the desk&rsquo;s record.
+        </p>
+        <p class="small">
+          Never hand an item over on the strength of this page alone, and never take a payment. The desk does not
+          charge for a lost item, and nobody from L&amp;F will ask for money to release one.
+        </p>
+      </div>
+
+      <p style="margin-top: 22px">
+        <a class="btn" href="/">Try the board again</a>
+        <a class="btn btn-secondary" href="/safety" style="margin-left: 8px">Safety</a>
+      </p>
+    </div>
+    <script src="/offline-sheet.js" defer></script>
+  </body>
+</html>

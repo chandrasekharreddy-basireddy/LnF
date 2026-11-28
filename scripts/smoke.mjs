@@ -48,6 +48,11 @@ const routes = [
   '/api/cron/push',
   '/robots.txt',
   '/sitemap.xml',
+  '/offline.html',
+  '/offline-sheet.js',
+  '/sw.js',
+  '/sw-policy.js',
+  '/manifest.webmanifest',
 ];
 
 const out = [];
@@ -191,7 +196,7 @@ try {
 
   const staff = await get(BASE + '/staff', { redirect: 'manual' });
   log('CHECK /staff unauthenticated ->', staff.status, staff.headers.get('location'));
-  for (const guarded of ['/staff/scan', '/staff/disposal', '/staff/matches', '/staff/disputes', '/staff/items/LF-2026-0007/label', '/account', '/account/saved', '/messages', '/messages/CLM-2026-0001', '/disputes', '/disputes/DSP-2026-0001', '/staff/import', '/staff/analytics', '/items/LF-2026-0007/timeline']) {
+  for (const guarded of ['/staff/scan', '/staff/disposal', '/staff/matches', '/staff/disputes', '/staff/items/LF-2026-0007/label', '/account', '/account/saved', '/messages', '/messages/CLM-2026-0001', '/disputes', '/disputes/DSP-2026-0001', '/staff/import', '/staff/analytics', '/staff/desk', '/items/LF-2026-0007/timeline']) {
     const res = await get(BASE + guarded, { redirect: 'manual' });
     const loc = res.headers.get('location') ?? '';
     const body = await res.text();
@@ -199,7 +204,7 @@ try {
     // the redirect to the client in a 200 payload. Both are correct; rendering
     // the staff UI is not.
     const redirected = (res.status === 307 && loc.includes('/sign-in')) || /\/sign-in\?next=/.test(body);
-    const leaked = /Disposal queue|Scan a tag|Saved searches|No pairs waiting|Record the outcome|Ask for a second look|Download the PDF|Recovery rate|Days in the chain/.test(body);
+    const leaked = /Disposal queue|Scan a tag|Saved searches|No pairs waiting|Record the outcome|Ask for a second look|Download the PDF|Recovery rate|Days in the chain|Keep this sheet for the counter|On the board now/.test(body);
     log(`CHECK ${guarded} guarded ->`, redirected && !leaked, `(${res.status})`);
   }
 
@@ -225,6 +230,47 @@ try {
     timelineMissing.status !== 500 && !/Days in the chain/.test(timelineMissingBody),
     `(${timelineMissing.status})`,
   );
+
+  // the offline desk (0035 + the worker): a page that must work with no network,
+  // a policy that says what may be cached, and a manifest that installs
+  const offlineRes = await get(BASE + '/offline.html', { redirect: 'manual' });
+  const offline = await offlineRes.text();
+  const offlineCsp = offlineRes.headers.get('content-security-policy') ?? '';
+  log('CHECK the offline page is public and served:', offlineRes.status === 200, `(${offlineRes.status})`);
+  log('CHECK it explains itself without a session:', /You are offline/.test(offline) && /at the counter/.test(offline));
+  log('CHECK it carries no listing data of its own:', !/LF-\d{4}-\d{4}/.test(offline));
+  log(
+    'CHECK it repeats the no-payment rule:',
+    /Never hand an item over/.test(offline) && /does not\s+charge/.test(offline),
+  );
+  log('CHECK its own policy, not the nonce one:', offlineCsp.includes("default-src 'none'") && offlineCsp.includes("script-src 'self'") && !offlineCsp.includes('nonce-'));
+  log('CHECK its one script is same-origin:', /<script src="\/offline-sheet\.js"/.test(offline) && !/<script>/.test(offline));
+
+  const sheetJs = await (await get(BASE + '/offline-sheet.js')).text();
+  log(
+    'CHECK the sheet reader draws with textContent, never markup:',
+    /textContent/.test(sheetJs) && !/\.innerHTML\s*=/.test(sheetJs),
+  );
+  log('CHECK the sheet reader refuses an expired sheet:', /SHEET_EXPIRED_MS/.test(sheetJs) && /age\.expired/.test(sheetJs));
+
+  const sw = await get(BASE + '/sw.js');
+  const swBody = await sw.text();
+  log('CHECK the worker is served as javascript:', sw.status === 200 && /javascript/.test(sw.headers.get('content-type') ?? ''), `(${sw.headers.get('content-type')})`);
+  log('CHECK the worker loads its policy module:', /importScripts\('\/sw-policy\.js'\)/.test(swBody));
+  log(
+    'CHECK the worker never answers a page from a cache:',
+    /if \(plan === 'navigation'\) event\.respondWith\(networkOrOffline/.test(swBody) &&
+      !/async function networkOrOffline[\s\S]{0,700}?caches\.match\(request\)/.test(swBody),
+  );
+  const policy = await (await get(BASE + '/sw-policy.js')).text();
+  log('CHECK the policy keeps the offline page and nothing private:', /offline\.html/.test(policy) && /'\/staff'/.test(policy) && /'\/api\/'/.test(policy));
+
+  const manifestRes = await get(BASE + '/manifest.webmanifest');
+  const manifest = await manifestRes.json().catch(() => ({}));
+  log('CHECK the manifest is served:', manifestRes.status === 200 && manifest.name === 'L&F — lost and found', `(${manifestRes.status})`);
+  log('CHECK it pins id and scope:', manifest.id === '/' && manifest.scope === '/');
+  log('CHECK it offers shortcuts into the app:', Array.isArray(manifest.shortcuts) && manifest.shortcuts.length === 3);
+  log('CHECK it starts where the board is:', manifest.start_url === '/' && manifest.display === 'standalone');
 
   // the institution report: a PDF behind a staff session, and nothing else
   const reportAnon = await get(BASE + '/api/staff/report/monthly?month=2026-11', { redirect: 'manual' });

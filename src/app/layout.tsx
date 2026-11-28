@@ -3,6 +3,7 @@ import './globals.css';
 import { cookies } from 'next/headers';
 import { SiteFooter, SiteHeader } from '@/components/site-header';
 import { currentUser, unreadMessages } from '@/lib/data';
+import { ServiceWorker } from '@/components/sw-register';
 import { env } from '@/lib/env';
 
 export const metadata: Metadata = {
@@ -53,6 +54,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <div className="wrap">{children}</div>
         </main>
         <SiteFooter />
+        <ServiceWorker />
         <span className="sr-only">{env.campusName} lost and found, built for fast connections and slow ones.</span>
       </body>
     </html>
