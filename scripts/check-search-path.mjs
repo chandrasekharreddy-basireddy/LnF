@@ -36,7 +36,9 @@ for (const file of files) {
   const re = /alter function\s+public\.(\w+)[^;]*set\s+search_path\s*=\s*[^;]*extensions/gi;
   let m;
   while ((m = re.exec(sql)) !== null) {
-    if (latest.has(m[1])) latest.get(m[1]).hasExtensions = true;
+    // same rule as the sweep: an ALTER only fixes what already exists
+    const info = latest.get(m[1]);
+    if (info && info.file <= file) info.hasExtensions = true;
   }
   // The sweep fixes whatever exists at that point in time. It must not mark a
   // function defined in a LATER file: that was the bug — 0025's sweep cleared a

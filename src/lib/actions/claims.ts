@@ -155,8 +155,19 @@ export async function finishPublicClaim(_prev: PublicClaimState, formData: FormD
   let claimRef = '';
   try {
     const supabase = await supabaseServer();
-    const { error } = await supabase.auth.verifyOtp({ email, token, type: 'email' });
-    if (error) {
+
+    // same two attempts as the sign-in form: a code minted by generateLink is
+    // bound to the type that minted it, and the claim flow was still trying one
+    let verified = false;
+    let lastError: { message: string } | null = null;
+    for (const type of ['email', 'magiclink'] as const) {
+      const attempt = await supabase.auth.verifyOtp({ email, token, type });
+      if (!attempt.error) { verified = true; lastError = null; break; }
+      lastError = attempt.error;
+    }
+
+    if (!verified) {
+      console.warn('[claims] verifyOtp failed:', lastError?.message ?? 'no data');
       await (supabaseAdmin() ?? supabase).rpc('log_auth_event', {
         p_kind: 'code_failed',
         p_email: email,

@@ -125,7 +125,6 @@ export async function verifyOtp(_prev: AuthState, formData: FormData): Promise<A
 }
 
 export async function signOut(): Promise<void> {
-  await forgetDevicePush();
   const supabase = await supabaseServer();
   const { error } = await supabase.auth.signOut();
 
@@ -148,11 +147,15 @@ export async function signOut(): Promise<void> {
  * person to use the device keeps receiving the previous owner's notifications,
  * because a push subscription outlives a cookie.
  */
-export async function forgetDevicePush(): Promise<void> {
+export async function forgetDevicePush(endpoint?: string): Promise<void> {
   const supabase = await supabaseServer();
   try {
-    // set_push_opt_in(false) deletes this user's subscriptions and the flag
-    await supabase.rpc('set_push_opt_in', { p_on: false });
+    // Only the device being signed out. set_push_opt_in(false) deleted every
+    // subscription the person had, so signing out on a library machine also
+    // silenced their phone.
+    if (endpoint) {
+      await supabase.rpc('unregister_push_subscription', { p_endpoint: endpoint });
+    }
   } catch {
     // a stale row is removed by the dispatcher after it fails
   }

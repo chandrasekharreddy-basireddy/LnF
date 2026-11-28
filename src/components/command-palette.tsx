@@ -138,7 +138,7 @@ export function CommandPalette({ staff = false }: { staff?: boolean }) {
                   event.preventDefault();
                   if (refMatch) {
                     const upper = trimmed.toUpperCase();
-                    go(referencePath(upper));
+                    go(referencePath(upper) ?? `/browse?q=${encodeURIComponent(trimmed)}`);
                   } else if (filtered[0]) {
                     go(filtered[0].href);
                   }

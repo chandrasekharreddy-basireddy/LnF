@@ -45,6 +45,13 @@ export function ChatThread({
   const [messages, setMessages] = useState<Msg[]>(initialMessages);
   const [state, action] = useActionState(postMessage, initial);
   const [live, setLive] = useState<'connecting' | 'live' | 'polling'>('connecting');
+  // the interval reads the current mode without re-subscribing to it: putting
+  // `live` in the dependency list tore the channel down and rebuilt it once per
+  // connection, which is what the audit caught
+  const liveRef = useRef(live);
+  useEffect(() => {
+    liveRef.current = live;
+  }, [live]);
   const bottom = useRef<HTMLDivElement | null>(null);
   const lastCount = useRef(initialMessages.length);
 
@@ -96,7 +103,7 @@ export function ChatThread({
     const timer = locked
       ? null
       : window.setInterval(() => {
-      if (document.hidden || live === 'live') return;
+      if (document.hidden || liveRef.current === 'live') return;
       void fetchThread(claimRef).then((snapshot) => {
         if (cancelled || !snapshot.ok) return;
         merge(snapshot.messages);
@@ -113,7 +120,7 @@ export function ChatThread({
       window.clearTimeout(settle);
       if (channel) void supabaseBrowser().removeChannel(channel);
     };
-  }, [claimId, claimRef, merge, locked, live]);
+  }, [claimId, claimRef, merge, locked]);
 
   // pull once after a successful send, so the sender sees their own message
   const sentAt = state.ok ? state.sentAt : undefined;
