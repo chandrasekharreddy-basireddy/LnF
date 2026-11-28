@@ -99,7 +99,11 @@ export const getItem = cache(async function getItem(ref: string): Promise<{ item
   try {
     const supabase = await supabaseServer();
     const { data, error } = await supabase.rpc('get_public_item', { p_ref: ref });
-    if (error || !data) return null;
+    // A transport failure is not a missing item. Returning null for both made the
+    // page call notFound(), so poor wifi told a student their listing had been
+    // removed. Throwing renders error.tsx, which offers a retry.
+    if (error) throw new Error(error.message);
+    if (!data) return null;
     const payload = data as { item: Partial<PublicItem> & { ref: string; status: PublicItem['status'] }; photos: Photo[] };
 
     // get_public_item returns a stub for a quarantined listing: reference and
@@ -129,8 +133,9 @@ export const getItem = cache(async function getItem(ref: string): Promise<{ item
 
     const photos = payload.item.sensitiveHiddenPhoto ? [] : await signPhotos(payload.photos ?? []);
     return { item: payload.item as PublicItem, photos };
-  } catch {
-    return null;
+  } catch (cause) {
+    // rethrow: the page's error boundary shows "This screen did not load"
+    throw cause instanceof Error ? cause : new Error('Could not read the listing');
   }
 });
 

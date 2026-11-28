@@ -1,5 +1,11 @@
 'use client';
 
+/* eslint-disable react-hooks/refs --
+   useFormDraft returns { formRef, onBeforeSubmit }. Passing a ref object to
+   <form ref=...> is the documented pattern; the rule flags reading it off the
+   returned object because it cannot see through the hook. */
+
+import { useFormDraft } from './form-draft';
 import { useActionState } from 'react';
 import { handInFoundItem, type HandInState } from '@/lib/actions/reports';
 import { CATEGORIES } from '@/lib/copy';
@@ -12,10 +18,11 @@ const initial: HandInState = { ok: false };
 /** The public intake form. No account, no photo upload, staff review first. */
 export function HandInForm({ zones }: { zones: { code: string; name: string }[] }) {
   const [state, action] = useActionState(handInFoundItem, initial);
+  const draft = useFormDraft(state);
   const fe = state.fieldErrors ?? {};
 
   return (
-    <form className="form" action={action} noValidate>
+    <form className="form" action={action} ref={draft.formRef} onSubmit={draft.onBeforeSubmit} noValidate>
       {state.error ? <Banner tone="danger">{state.error}</Banner> : null}
 
       <div className="field">

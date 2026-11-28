@@ -54,6 +54,7 @@ export function CommandPalette({ staff = false }: { staff?: boolean }) {
       if (event.key === 'Escape') {
         setOpen(false);
         setQuery('');
+        document.querySelector<HTMLButtonElement>('[data-palette-trigger]')?.focus();
         return;
       }
       // keep focus inside the dialog while it is open
@@ -88,11 +89,6 @@ export function CommandPalette({ staff = false }: { staff?: boolean }) {
     if (open) inputRef.current?.focus();
   }, [open]);
 
-  const closePalette = () => {
-    setOpen(false);
-    setQuery('');
-  };
-
   const shortcuts = staff ? [...STAFF_SHORTCUTS, ...PUBLIC_SHORTCUTS] : PUBLIC_SHORTCUTS;
   const trimmed = query.trim();
   const refMatch = trimmed.match(/^(LF|CLM)-\d{4}-\d{1,4}$/i);
@@ -103,11 +99,20 @@ export function CommandPalette({ staff = false }: { staff?: boolean }) {
       (shortcut.hint ?? '').includes(trimmed.toLowerCase()),
   );
 
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+
   const go = (href: string | null) => {
     if (!href) return;
     setOpen(false);
     setQuery('');
     router.push(href);
+  };
+
+  /** Closing without navigating must put focus back where it came from. */
+  const closePalette = () => {
+    setOpen(false);
+    setQuery('');
+    triggerRef.current?.focus();
   };
 
   return (
