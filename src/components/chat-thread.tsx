@@ -91,7 +91,9 @@ export function ChatThread({
       // the settle timer below marks this as polling
     }
 
+    // a background tab does not need a request every five seconds
     const timer = window.setInterval(() => {
+      if (document.hidden) return;
       void fetchThread(claimRef).then((snapshot) => {
         if (cancelled || !snapshot.ok) return;
         merge(snapshot.messages);

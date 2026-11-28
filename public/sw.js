@@ -103,6 +103,18 @@ self.addEventListener('fetch', (event) => {
   if (plan === 'navigation') event.respondWith(networkOrOffline(event.request));
 });
 
+/**
+ * A path we are willing to open. `//evil.com` is protocol-relative and would
+ * navigate off-site, and a backslash is read as a slash by some parsers — so
+ * both are refused rather than normalised.
+ */
+function safePath(value) {
+  if (typeof value !== 'string') return FALLBACK.url;
+  if (!value.startsWith('/') || value.startsWith('//')) return FALLBACK.url;
+  if (value.includes('\\') || /\s/.test(value)) return FALLBACK.url;
+  return value;
+}
+
 self.addEventListener('push', (event) => {
   let data = FALLBACK;
   try {
@@ -111,7 +123,7 @@ self.addEventListener('push', (event) => {
       data = {
         title: typeof parsed.title === 'string' ? parsed.title : FALLBACK.title,
         body: typeof parsed.body === 'string' ? parsed.body : FALLBACK.body,
-        url: typeof parsed.url === 'string' && parsed.url.startsWith('/') ? parsed.url : FALLBACK.url,
+        url: safePath(parsed.url),
         tag: typeof parsed.tag === 'string' && parsed.tag ? parsed.tag : FALLBACK.tag,
       };
     }

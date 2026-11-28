@@ -22,6 +22,20 @@ const STAFF_SHORTCUTS: Shortcut[] = [
   { label: 'Disposal queue', href: '/staff/disposal', hint: 'desk' },
 ];
 
+const ITEM_REF = /^LF-\d{4}-\d{4}$/;
+const CLAIM_REF = /^CLM-\d{4}-\d{4}$/;
+
+/**
+ * Where a typed reference belongs. Anything that is not one of the two shapes
+ * goes nowhere: sending "hello" to /items/HELLO only produces a 404 that looks
+ * like the item is missing.
+ */
+function referencePath(value: string): string | null {
+  if (ITEM_REF.test(value)) return `/items/${value}`;
+  if (CLAIM_REF.test(value)) return `/claims/${value}`;
+  return null;
+}
+
 export function CommandPalette({ staff = false }: { staff?: boolean }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -70,7 +84,8 @@ export function CommandPalette({ staff = false }: { staff?: boolean }) {
       (shortcut.hint ?? '').includes(trimmed.toLowerCase()),
   );
 
-  const go = (href: string) => {
+  const go = (href: string | null) => {
+    if (!href) return;
     setOpen(false);
     setQuery('');
     router.push(href);
@@ -104,7 +119,7 @@ export function CommandPalette({ staff = false }: { staff?: boolean }) {
                   event.preventDefault();
                   if (refMatch) {
                     const upper = trimmed.toUpperCase();
-                    go(upper.startsWith('LF') ? `/items/${upper}` : `/claims/${upper}`);
+                    go(referencePath(upper));
                   } else if (filtered[0]) {
                     go(filtered[0].href);
                   }
@@ -114,7 +129,7 @@ export function CommandPalette({ staff = false }: { staff?: boolean }) {
             <ul>
               {refMatch ? (
                 <li>
-                  <button type="button" onClick={() => { const u = trimmed.toUpperCase(); go(u.startsWith('CLM') ? `/claims/${u}` : `/items/${u}`); }}>
+                  <button type="button" onClick={() => go(referencePath(trimmed.toUpperCase()))}>
                     Open {trimmed.toUpperCase()}
                     <span className="kbd">Enter</span>
                   </button>
