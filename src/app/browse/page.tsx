@@ -53,8 +53,9 @@ export default async function BrowsePage({ searchParams }: { searchParams: Param
           <p className="eyebrow">The board</p>
           <h1 style={{ marginBottom: 4 }}>Browse what has been handed in</h1>
           <p className="muted small">
-            {result.total} listing{result.total === 1 ? '' : 's'}
-            {hasFilters ? ' match your filters' : ' on the board'}.
+            {unreachable
+              ? 'The board could not be read just now.'
+              : `${result.total} listing${result.total === 1 ? '' : 's'}${hasFilters ? ' match your filters' : ' on the board'}.`}
           </p>
         </div>
         <Link className="btn btn-sm" href="/report/found">

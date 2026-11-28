@@ -2,10 +2,10 @@
   "name": "lnf",
   "version": "1.0.0",
   "private": true,
-  "description": "L&F — a lost and found platform. Report, browse, verify, recover.",
+  "description": "L&F \u2014 a lost and found platform. Report, browse, verify, recover.",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/preflight.mjs && next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "check": "npm run typecheck && npm run build",
