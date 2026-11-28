@@ -68,8 +68,13 @@ $$;
 create table if not exists storage.buckets (
   id text primary key,
   name text,
+  owner uuid,
   public boolean default false,
-  created_at timestamptz default now()
+  avif_autodetection boolean default false,
+  file_size_limit bigint,
+  allowed_mime_types text[],
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
 );
 
 create table if not exists storage.objects (
@@ -77,9 +82,16 @@ create table if not exists storage.objects (
   bucket_id text references storage.buckets (id),
   name text,
   owner uuid,
+  owner_id text,
   metadata jsonb,
-  created_at timestamptz default now()
+  path_tokens text[] generated always as (string_to_array(name, '/')) stored,
+  version text,
+  user_metadata jsonb,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  last_accessed_at timestamptz default now()
 );
+alter table storage.objects enable row level security;
 
 create or replace function storage.foldername(name text) returns text[] language sql immutable as $$
   select string_to_array(name, '/');
