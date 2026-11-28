@@ -63,9 +63,11 @@ const ALLOWED_PUSH_HOST =
 
 /** Validates that a Web Push endpoint targets a known HTTPS push service (blocks SSRF). */
 export function isAllowedPushEndpoint(endpoint: string): boolean {
-  if (!isAllowedPushEndpoint(endpoint)) {
-    return false;
-  }
+  // shape first: this used to call itself here, which is a stack overflow, not a guard
+  if (typeof endpoint !== 'string') return false;
+  if (!endpoint.startsWith('https://')) return false;
+  if (/\s/.test(endpoint)) return false;
+  if (endpoint.length < 20 || endpoint.length > 2000) return false;
   try {
     const u = new URL(endpoint);
     if (u.protocol !== 'https:') return false;
