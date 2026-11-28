@@ -99,7 +99,7 @@ const codeBlock = (code: string) => `
   <p style="margin:0;font-size:12px;color:#5b6b66;text-align:center">Expires in 10 minutes · single use · never share it</p>`;
 
 export const templates = {
-  signInCode: (code: string, email: string, kind: 'signin' | 'signup' = 'signin') => ({
+  signInCode: (code: string, email: string, kind: 'signin' | 'signup' = 'signin', link?: string) => ({
     subject:
       kind === 'signup'
         ? `${code} is your L&F sign-in code`
@@ -111,13 +111,15 @@ export const templates = {
        <p style="margin-top:14px;font-size:13px;color:#5b6b66">
          If you did not ask to sign in, ignore this email. Nobody can use the code without seeing it here.
        </p>`,
-      { label: 'Or open L&F', href: `${env.siteUrl}/sign-in` },
+      // the link and the code are the same token: whichever the person uses,
+      // the other stops working
+      { label: link ? 'Or sign in with one tap' : 'Or open L&F', href: link ?? `${env.siteUrl}/sign-in` },
       {
         preheader: `Your L&F code is ${code}`,
         footerNote: `Sent because someone entered <strong>${esc(email)}</strong> on the sign-in screen.`,
       },
     ),
-    text: `Your L&F sign-in code is ${code}. It expires in 10 minutes and works once. ${env.siteUrl}/sign-in`,
+    text: `Your L&F sign-in code is ${code}. It expires in 10 minutes and works once.${link ? ` Or open this link: ${link}` : ` ${env.siteUrl}/sign-in`}`,
     tag: 'sign-in-code',
   }),
 

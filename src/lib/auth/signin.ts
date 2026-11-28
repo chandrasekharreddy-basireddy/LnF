@@ -3,22 +3,24 @@ import { env } from '@/lib/env';
 import { sendEmail, templates } from '@/lib/email';
 
 /**
- * Sign-in codes, issued and delivered by us.
+ * Sign-in codes: minted by Supabase, delivered only by us.
  *
  * Supabase Auth keeps the part that is genuinely hard to get right — token
- * generation, session cookies, refresh rotation, single-use enforcement. This
- * module takes over the part that was generic and ugly: minting the code with
- * the admin API and sending it through Brevo with our own template, so the
- * sign-in email looks like the product and carries our anti-scam footer.
+ * generation, session cookies, refresh rotation, single-use enforcement. Every
+ * byte of the email is ours: the template, the sender, the footer, and the
+ * Brevo API call.
  *
- * If no service-role key is configured we fall back to Supabase's own mailer,
- * which means the feature degrades to "works, with a plainer email" rather
- * than "does not work".
+ * There is deliberately no fallback to Supabase's own mailer. That fallback
+ * looked like resilience and was the opposite: it is rate-limited to a few
+ * messages an hour, its emails carry no product footer, and it made a
+ * misconfigured deployment look like a working one. If Brevo is not configured
+ * or the send fails, this returns an error the page shows, and the operator
+ * finds out immediately.
  */
 
 type IssueResult =
-  | { ok: true; channel: 'brevo' | 'supabase' }
-  | { ok: false; error: string };
+  | { ok: true; channel: 'brevo' }
+  | { ok: false; error: string; reason: 'NOT_CONFIGURED' | 'SEND_FAILED' | 'MINT_FAILED' };
 
 function adminClient(): SupabaseClient | null {
   if (!env.serviceRoleKey) return null;
@@ -29,7 +31,16 @@ function adminClient(): SupabaseClient | null {
 
 export async function issueSignInCode(email: string): Promise<IssueResult> {
   const admin = adminClient();
-  if (!admin) return issueViaSupabase(email);
+  if (!admin) {
+    // no service-role key: we cannot mint a code, and we will not hand the job
+    // to Supabase's mailer
+    console.warn('[signin] SUPABASE_SERVICE_ROLE_KEY is not set — no code can be issued');
+    return {
+      ok: false,
+      reason: 'NOT_CONFIGURED',
+      error: 'Sign-in email is not configured on this deployment. Tell the desk.',
+    };
+  }
 
   try {
     // One call for the common case. generateLink only fails for an address with
@@ -45,7 +56,7 @@ export async function issueSignInCode(email: string): Promise<IssueResult> {
       const { error: createError } = await admin.auth.admin.createUser({ email, email_confirm: false });
       // "already registered" means a race with another request; carry on
       if (createError && !/already/i.test(createError.message)) {
-        return { ok: false, error: 'Could not start sign-in. Try again in a moment.' };
+        return { ok: false, reason: 'MINT_FAILED', error: 'Could not start sign-in. Try again in a moment.' };
       }
       link = await admin.auth.admin.generateLink({
         type: 'magiclink',
@@ -56,51 +67,39 @@ export async function issueSignInCode(email: string): Promise<IssueResult> {
 
     const { data, error } = link;
     if (error || !data?.properties?.email_otp) {
-      return issueViaSupabase(email);
+      console.warn('[signin] could not mint a code:', error?.message ?? 'no email_otp in the response');
+      return {
+        ok: false,
+        reason: 'MINT_FAILED',
+        error: 'Could not start sign-in. Try again in a moment.',
+      };
     }
 
     const code = data.properties.email_otp;
-    const mail = templates.signInCode(code, email);
+    // the same token as a clickable link, for a person who would rather tap
+    const actionUrl = data.properties.action_link;
+    const mail = templates.signInCode(code, email, 'signin', actionUrl);
     const sent = await sendEmail({ to: email, ...mail });
 
     if (!sent.ok) {
-      // The code exists but the email did not leave. Fall back so the user is
-      // not stuck holding a code that never arrived.
-      return issueViaSupabase(email);
+      // The code exists but never left. Say so — a silent fallback is how a
+      // broken provider stays broken for weeks.
+      console.error('[signin] brevo refused the sign-in mail, status', sent.status);
+      return {
+        ok: false,
+        reason: 'SEND_FAILED',
+        error: 'We could not send the email just now. Try again in a minute.',
+      };
     }
 
     return { ok: true, channel: 'brevo' };
-  } catch {
-    return issueViaSupabase(email);
-  }
-}
-
-async function issueViaSupabase(email: string): Promise<IssueResult> {
-  try {
-    const { createServerClient } = await import('@supabase/ssr');
-    const { cookies } = await import('next/headers');
-    const store = await cookies();
-    const supabase = createServerClient(env.supabaseUrl, env.supabaseAnonKey, {
-      cookies: {
-        getAll: () => store.getAll(),
-        setAll: (list) => {
-          try {
-            list.forEach(({ name, value, options }) => store.set(name, value, options));
-          } catch {
-            // called from a server component; the proxy refreshes the session
-          }
-        },
-      },
-    });
-
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { shouldCreateUser: true, emailRedirectTo: `${env.siteUrl}/auth/confirm` },
-    });
-    if (error) return { ok: false, error: 'Could not send the code. Try again in a moment.' };
-    return { ok: true, channel: 'supabase' };
-  } catch {
-    return { ok: false, error: 'Sign-in is not available right now. Try again in a minute.' };
+  } catch (error) {
+    console.error('[signin] unexpected failure while issuing a code:', (error as Error).message);
+    return {
+      ok: false,
+      reason: 'MINT_FAILED',
+      error: 'Could not start sign-in. Try again in a moment.',
+    };
   }
 }
 

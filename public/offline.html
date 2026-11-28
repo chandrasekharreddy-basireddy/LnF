@@ -46,8 +46,14 @@
         --line: #2c3437; --brand: #74c69d;
       }
       body { background: var(--paper); color: var(--ink); }
-      input { background: var(--card); color: var(--ink); border-color: var(--line); }
+      /* the cards and the warning block had no dark rule at all: white panels
+         with light text, 1.24:1 */
+      .card, .panel, section, .warn { background: var(--card); color: var(--ink); border-color: var(--line); }
+      input, input[type="search"], select, textarea {
+        background: var(--card); color: var(--ink); border-color: var(--line);
+      }
       th, td { border-color: var(--line); }
+      a { color: var(--brand); }
     }
     .sheet-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   </style>

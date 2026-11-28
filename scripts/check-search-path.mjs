@@ -38,9 +38,13 @@ for (const file of files) {
   while ((m = re.exec(sql)) !== null) {
     if (latest.has(m[1])) latest.get(m[1]).hasExtensions = true;
   }
-  // the sweep in 0025/0039 applies the same fix by pattern
+  // The sweep fixes whatever exists at that point in time. It must not mark a
+  // function defined in a LATER file: that was the bug — 0025's sweep cleared a
+  // 0038 regression, so the guard stayed green while create_item was broken.
   if (/prosrc like '%digest\(%'/i.test(sql)) {
-    for (const info of latest.values()) info.hasExtensions = true;
+    for (const [name, info] of latest) {
+      if (info.file <= file) info.hasExtensions = true;
+    }
   }
 }
 

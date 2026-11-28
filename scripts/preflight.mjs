@@ -7,6 +7,21 @@
  * site looks like an empty board rather than a broken one. That is what
  * landf.vercel.app did on 28/11. A failed build is a better answer.
  */
+import { existsSync, readFileSync } from 'node:fs';
+
+// next build loads .env.local; a plain node script does not. Read the same file
+// so a developer running `npm run build` sees the same verdict as Vercel does.
+for (const file of ['.env.local', '.env']) {
+  if (!existsSync(file)) continue;
+  for (const line of readFileSync(file, 'utf8').split('\n')) {
+    const match = /^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/.exec(line);
+    if (!match) continue;
+    const [, name, raw] = match;
+    if (process.env[name]) continue;
+    process.env[name] = raw.replace(/^["']|["']$/g, '');
+  }
+}
+
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
 const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '';
 
