@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { supabaseServer } from '@/lib/supabase-server';
 import { currentUser } from '@/lib/data';
 import { errorText } from '@/lib/copy';
-import { bool, clamp, isValidDate, str, todayISO } from '@/lib/validation';
+import { isEmail, bool, clamp, isValidDate, str, todayISO } from '@/lib/validation';
 
 import { processAndUploadPhotos } from '@/lib/photos';
 import { sendOrQueue, templates } from '@/lib/email';
@@ -28,6 +28,9 @@ export async function createReport(_prev: ReportState, formData: FormData): Prom
   const question = clamp(str(formData.get('question')), 200);
   const answer = clamp(str(formData.get('answer')), 200);
   const contactEmail = str(formData.get('contact_email')).toLowerCase();
+  if (contactEmail && !isEmail(contactEmail)) {
+    return { ok: false, fieldErrors: { contact_email: 'Enter a valid email address, or leave it blank.' }, error: 'Check the highlighted fields.' };
+  }
   const sensitive = bool(formData.get('sensitive'));
   const consent = bool(formData.get('consent'));
 
