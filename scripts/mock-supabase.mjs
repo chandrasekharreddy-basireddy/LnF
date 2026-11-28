@@ -353,6 +353,18 @@ export function startMock(port = 54321) {
     if (path === '/rest/v1/rpc/is_item_saved') {
       return send(res, 200, false);
     }
+    if (path === '/rest/v1/rpc/my_disputes') {
+      return send(res, 200, [{ ref: 'DSP-2026-0001', claimRef: 'CLM-2026-0002', itemRef: 'LF-2026-0009', itemTitle: 'Steel water bottle with a dented base', status: 'open', reason: 'Finder asked for money', createdAt: '2026-11-27T09:00:00Z', lastMessage: 'The desk has asked the finder to respond.', ageDays: 1 }]);
+    }
+    if (path === '/rest/v1/rpc/dispute_queue') {
+      return send(res, 200, [{ ref: 'DSP-2026-0001', claimRef: 'CLM-2026-0002', itemRef: 'LF-2026-0009', itemTitle: 'Steel water bottle with a dented base', itemStatus: 'claimed', claimStatus: 'approved', openerRole: 'claimant', reason: 'Finder asked for money', createdAt: '2026-11-27T09:00:00Z', ageDays: 1, claimant: 'Ananya Rao', claimantEmail: 'ananya@campus.edu', trust: { claims: 2, approved: 1, rejected: 0, upheld: 0, label: 'new' } }]);
+    }
+    if (path === '/rest/v1/rpc/match_queue') {
+      return send(res, 200, [{ lostRef: 'LF-2026-0011', lostTitle: 'Lost: white wired earphones', foundRef: 'LF-2026-0007', foundTitle: 'Black wireless earbuds in a charging case', score: 0.86, photoScore: 0.91, reason: 'Photo similarity 91% · same category · 2 days apart' }]);
+    }
+    if (path === '/rest/v1/rpc/institution_analytics') {
+      return send(res, 200, { windowDays: 60, found: 24, lost: 9, recovered: 17, rate: 0.71, medianDays: 3.2, byCategory: [{ category: 'electronics', found: 9, recovered: 7 }, { category: 'documents', found: 5, recovered: 4 }], byZone: [{ zone: 'Central Library', found: 9, recovered: 7 }, { zone: 'Canteen', found: 5, recovered: 3 }], unmatched: 6 });
+    }
     if (path === '/rest/v1/rpc/claim_thread') {
       return send(res, 200, THREAD);
     }
