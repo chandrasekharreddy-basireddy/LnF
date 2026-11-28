@@ -6,6 +6,106 @@
  */
 import http from 'node:http';
 
+
+const sessionRole = () => (process.env.MOCK_ROLE === 'staff' ? 'staff' : 'member');
+
+const SESSION_USER = {
+  id: '11111111-1111-4111-8111-111111111111',
+  aud: 'authenticated',
+  role: 'authenticated',
+  email: 'ananya@campus.edu',
+  email_confirmed_at: '2026-11-01T09:00:00Z',
+  app_metadata: { provider: 'email' },
+  user_metadata: {},
+  created_at: '2026-11-01T09:00:00Z',
+};
+
+const SESSION_PROFILE = {
+  full_name: 'Ananya Rao',
+  email: 'ananya@campus.edu',
+  phone: null,
+  alerts_opt_in: true,
+  marketing_opt_in: false,
+  email_verified_at: '2026-11-01T09:02:00Z',
+};
+
+const MY_ITEMS = [
+  { id: 'i1', ref_code: 'LF-2026-0007', type: 'found', status: 'available', title: 'Black wireless earbuds in a charging case', category: 'electronics', created_at: '2026-11-20T10:00:00Z', event_date: '2026-11-19' },
+  { id: 'i2', ref_code: 'LF-2026-0011', type: 'lost', status: 'available', title: 'Lost: white wired earphones', category: 'electronics', created_at: '2026-11-18T10:00:00Z', event_date: '2026-11-18' },
+];
+
+const MY_CLAIMS = [
+  { ref: 'CLM-2026-0002', status: 'approved', itemRef: 'LF-2026-0007', itemTitle: 'Black wireless earbuds in a charging case', itemStatus: 'claimed', createdAt: '2026-11-24T09:00:00Z', decidedAt: '2026-11-25T11:00:00Z', reason: 'Answer matched', hasCode: true },
+  { ref: 'CLM-2026-0001', status: 'submitted', itemRef: 'LF-2026-0008', itemTitle: 'Grey canvas backpack with a blue tag', itemStatus: 'available', createdAt: '2026-11-26T09:00:00Z', decidedAt: null, reason: null, hasCode: false },
+];
+
+const CONVERSATIONS = [
+  { claimRef: 'CLM-2026-0002', claimId: 'c1', itemRef: 'LF-2026-0007', itemTitle: 'Black wireless earbuds in a charging case', claimStatus: 'approved', itemStatus: 'claimed', myRole: sessionRole(), lastMessage: 'The desk has your item at the main gate counter.', lastAt: '2026-11-27T15:10:00Z', unread: 2, locked: false },
+  { claimRef: 'CLM-2026-0001', claimId: 'c2', itemRef: 'LF-2026-0008', itemTitle: 'Grey canvas backpack with a blue tag', claimStatus: 'submitted', itemStatus: 'available', myRole: sessionRole(), lastMessage: 'Could you describe the tag?', lastAt: '2026-11-26T12:00:00Z', unread: 0, locked: false },
+];
+
+const INTAKE = [
+  { ref: 'LF-2026-0016', title: 'Grey umbrella, wooden handle', status: 'pending_moderation', type: 'found', createdAt: '2026-11-27T08:10:00Z', zone: 'Main Gate & Security Desk' },
+  { ref: 'LF-2026-0017', title: 'Aadhaar card found near the gate', status: 'quarantined', type: 'found', createdAt: '2026-11-27T08:20:00Z', zone: null },
+];
+
+const AWAITING = [
+  { claimRef: 'CLM-2026-0002', itemRef: 'LF-2026-0007', itemTitle: 'Black wireless earbuds in a charging case', approvedAt: '2026-11-25T11:00:00Z', codeUsed: false },
+];
+
+const CLAIM_QUEUE = [
+  { ref: 'CLM-2026-0004', itemStatus: 'available', claimant: 'Ananya Rao', claimantEmail: 'ananya@campus.edu', itemRef: 'LF-2026-0009', itemTitle: 'Steel water bottle with a dented base', status: 'submitted', answerMatched: true, createdAt: '2026-11-27T09:12:00Z', proof: 'I have the receipt' },
+  { ref: 'CLM-2026-0003', itemStatus: 'available', claimant: 'Vikram Iyer', claimantEmail: 'vikram@campus.edu', itemRef: 'LF-2026-0008', itemTitle: 'Grey canvas backpack with a blue tag', status: 'under_review', answerMatched: false, createdAt: '2026-11-26T16:40:00Z', proof: null },
+];
+
+const STAFF_ITEM = {
+  item: { id: 'i1', ref: 'LF-2026-0007', type: 'found', status: 'available', category: 'electronics', title: 'Black wireless earbuds in a charging case', description: 'Matte black case, small sticker on the back. Found on a study desk.', zoneLabel: 'Central Library', zoneCode: 'library', spot: 'Quiet study desks, north windows', eventDate: '2026-11-19', custodyLabel: 'Main Gate & Security Desk', verificationQuestion: 'What is the Bluetooth name of the case?', sensitiveHiddenPhoto: false, isSample: false, createdAt: '2026-11-20T10:00:00Z', expiresAt: '2027-02-18T10:00:00Z' },
+  private: { answerHash: 'hash', notes: null, serial: null, bin: 'BIN-A-04', finderContact: 'finder@campus.edu' },
+  claims: [{ ref: 'CLM-2026-0002', status: 'approved', createdAt: '2026-11-24T09:00:00Z', answerMatched: true, proof: 'photo on my phone', reason: 'Answer matched', claimantId: 'c1' }],
+  history: [{ at: '2026-11-24T09:00:00Z', action: 'claim_submitted', detail: { ref: 'CLM-2026-0002' }, severity: 'info' }],
+  contactEmail: null,
+};
+
+const METRICS = {
+  itemsByStatus: { available: 4, claimed: 1, recovered: 17, expired: 2, quarantined: 1, pending_moderation: 2 },
+  claimsByStatus: { submitted: 3, under_review: 1, approved: 2, rejected: 1 },
+  openReports: 1,
+  cohort60d: { total: 24, recovered: 17, rate: 0.71 },
+  medianDays: 3.2,
+  openFound: 4, openLost: 1, recoveredTotal: 17,
+  byZone: [{ zone: 'Central Library', count: 9 }, { zone: 'Canteen', count: 5 }, { zone: 'Sports Complex', count: 3 }],
+  claims: { submitted: 3, under_review: 1, approved: 2, rejected: 1 },
+  staff: 3, admins: 1, users: 46,
+};
+
+const REPORTS = [
+  { id: 'r1', reason: 'asks_for_money', details: 'Asked me for ₹500 to return the bottle.', status: 'open', createdAt: '2026-11-27T08:30:00Z', itemRef: 'LF-2026-0009', itemTitle: 'Steel water bottle with a dented base', reporterId: 'u9', reporterEmail: 'student@campus.edu' },
+];
+
+const MY_CLAIM_DETAIL = {
+  claim: { ref: 'CLM-2026-0002', status: 'approved', createdAt: '2026-11-24T09:00:00Z', decidedAt: '2026-11-25T11:00:00Z', reason: 'Answer matched', proof: 'photo on my phone' },
+  item: { ref: 'LF-2026-0007', title: 'Black wireless earbuds in a charging case', status: 'claimed', zoneLabel: 'Central Library', custodyLabel: 'Main Gate & Security Desk', eventDate: '2026-11-19', category: 'electronics' },
+  timeline: [
+    { at: '2026-11-24T09:00:00Z', status: 'submitted', note: 'Claim submitted from the public item page.' },
+    { at: '2026-11-25T11:00:00Z', status: 'approved', note: 'Answer matched' },
+  ],
+  handover: { code: '4Y2FX8', revealed: false, expiresAt: '2026-12-11T19:44:00Z', used: false },
+};
+
+const THREAD = {
+  claimRef: 'CLM-2026-0002', claimId: 'c1', itemRef: 'LF-2026-0007',
+  itemTitle: 'Black wireless earbuds in a charging case', itemStatus: 'claimed',
+  claimStatus: 'approved', role: sessionRole(), locked: false, lockReason: null,
+  counterparty: 'The finder and the desk', unread: 2,
+  messages: [
+    { id: 'm1', body: 'Hi — I lost these on Tuesday in the library. I can describe the sticker on the case.', role: 'claimant', mine: true, kind: 'text', quarantined: false, at: '2026-11-26T10:02:00Z' },
+    { id: 'm2', body: 'Thanks. The desk has matched your answer and approved the claim.', role: 'staff', mine: false, kind: 'text', quarantined: false, at: '2026-11-26T10:40:00Z' },
+    { id: 'm3', body: 'Bring photo ID to the main gate counter and show your handover code.', role: 'staff', mine: false, kind: 'text', quarantined: false, at: '2026-11-27T15:10:00Z' },
+  ],
+};
+
+const REVIEW = { week_of: '2026-11-24', reviewed_by: '11111111-1111-4111-8111-111111111111', notes: 'Recovery rate up; two expired items disposed.', created_at: '2026-11-25T10:00:00Z' };
+
 const ZONES = [
   { code: 'library', name: 'Central Library', sort_order: 20 },
   { code: 'canteen', name: 'Canteen & Food Court', sort_order: 50 },
@@ -186,8 +286,51 @@ export function startMock(port = 54321) {
     for await (const chunk of req) body += chunk;
     const json = body ? JSON.parse(body) : {};
 
+    const wantsUser = (req.headers.authorization ?? '').startsWith('Bearer ');
     if (path === '/auth/v1/user') {
-      return send(res, 401, { message: 'no session' });
+      if (!wantsUser) return send(res, 401, { message: 'no session' });
+      return send(res, 200, SESSION_USER);
+    }
+    if (path === '/rest/v1/profiles') {
+      const single = (req.headers.accept ?? '').includes('object+json');
+      return send(res, 200, single ? SESSION_PROFILE : [SESSION_PROFILE]);
+    }
+    if (path === '/rest/v1/user_roles') {
+      return send(res, 200, sessionRole() === 'staff' ? [{ role: 'staff' }, { role: 'admin' }] : [{ role: 'member' }]);
+    }
+    if (path === '/rest/v1/items' && url.searchParams.get('select')?.includes('ref_code')) {
+      return send(res, 200, MY_ITEMS);
+    }
+    if (path === '/rest/v1/ops_reviews') {
+      const single = (req.headers.accept ?? '').includes('object+json');
+      return send(res, 200, single ? REVIEW : [REVIEW]);
+    }
+    if (path === '/rest/v1/rpc/my_claim') {
+      return send(res, 200, MY_CLAIM_DETAIL);
+    }
+    if (path === '/rest/v1/rpc/my_claims') {
+      return send(res, 200, MY_CLAIMS);
+    }
+    if (path === '/rest/v1/rpc/my_conversations') {
+      return send(res, 200, CONVERSATIONS);
+    }
+    if (path === '/rest/v1/rpc/staff_claim_queue') {
+      return send(res, 200, { claims: CLAIM_QUEUE, intake: INTAKE, awaitingHandover: AWAITING });
+    }
+    if (path === '/rest/v1/rpc/staff_item_detail') {
+      return send(res, 200, STAFF_ITEM);
+    }
+    if (path === '/rest/v1/rpc/admin_metrics') {
+      return send(res, 200, METRICS);
+    }
+    if (path === '/rest/v1/rpc/admin_open_reports' || path === '/rest/v1/rpc/open_reports') {
+      return send(res, 200, REPORTS);
+    }
+    if (path === '/rest/v1/rpc/verify_audit_chain') {
+      return send(res, 200, { ok: true, checked: 214, head: 'a1b2c3d4e5f6' });
+    }
+    if (path === '/rest/v1/rpc/staff_directory') {
+      return send(res, 200, [{ id: 'w1', name: 'Priya Raman' }, { id: 'w2', name: 'Arun Menon' }]);
     }
     if (path === '/auth/v1/verify' || path.startsWith('/auth/v1/token') || path.startsWith('/auth/v1/otp')) {
       return send(res, 200, { access_token: 'mock', token_type: 'bearer', user: { id: 'mock-user' } });
@@ -211,7 +354,7 @@ export function startMock(port = 54321) {
       return send(res, 200, false);
     }
     if (path === '/rest/v1/rpc/claim_thread') {
-      return send(res, 200, null);
+      return send(res, 200, THREAD);
     }
     // disputes (0030): empty lists for a signed-out visitor, and a public record
     // with numbers in it so /safety renders the block rather than hiding it
