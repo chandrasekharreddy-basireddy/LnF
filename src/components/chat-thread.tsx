@@ -96,7 +96,7 @@ export function ChatThread({
     const timer = locked
       ? null
       : window.setInterval(() => {
-      if (document.hidden) return;
+      if (document.hidden || live === 'live') return;
       void fetchThread(claimRef).then((snapshot) => {
         if (cancelled || !snapshot.ok) return;
         merge(snapshot.messages);
@@ -113,7 +113,7 @@ export function ChatThread({
       window.clearTimeout(settle);
       if (channel) void supabaseBrowser().removeChannel(channel);
     };
-  }, [claimId, claimRef, merge, locked]);
+  }, [claimId, claimRef, merge, locked, live]);
 
   // pull once after a successful send, so the sender sees their own message
   const sentAt = state.ok ? state.sentAt : undefined;

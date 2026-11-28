@@ -370,13 +370,10 @@ export function startMock(port = 54321) {
     }
     // disputes (0030): empty lists for a signed-out visitor, and a public record
     // with numbers in it so /safety renders the block rather than hiding it
-    if (path === '/rest/v1/rpc/my_disputes' || path === '/rest/v1/rpc/my_disputable_claims') {
+    if (path === '/rest/v1/rpc/my_disputable_claims') {
       return send(res, 200, []);
     }
-    if (path === '/rest/v1/rpc/dispute_queue') {
-      return send(res, 200, []);
-    }
-    if (path === '/rest/v1/rpc/dispute_room' || path === '/rest/v1/rpc/claimant_trust') {
+        if (path === '/rest/v1/rpc/dispute_room' || path === '/rest/v1/rpc/claimant_trust') {
       return send(res, 200, null);
     }
     if (path === '/rest/v1/rpc/public_trust') {

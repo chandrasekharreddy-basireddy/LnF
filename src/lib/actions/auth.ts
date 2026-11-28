@@ -107,3 +107,18 @@ export async function signOut(): Promise<void> {
   await supabase.auth.signOut();
   redirect('/');
 }
+
+/**
+ * Signing out also unsubscribes this browser from push. Without it the next
+ * person to use the device keeps receiving the previous owner's notifications,
+ * because a push subscription outlives a cookie.
+ */
+export async function forgetDevicePush(): Promise<void> {
+  const supabase = await supabaseServer();
+  try {
+    // set_push_opt_in(false) deletes this user's subscriptions and the flag
+    await supabase.rpc('set_push_opt_in', { p_on: false });
+  } catch {
+    // a stale row is removed by the dispatcher after it fails
+  }
+}

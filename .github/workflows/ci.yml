@@ -37,6 +37,8 @@ jobs:
           NEXT_PUBLIC_SUPPORT_EMAIL: help@example.com
       - name: Smoke — render every route against the mock
         run: node scripts/smoke.mjs
+      - name: Guardrail — every hashing function can reach pgcrypto
+        run: node scripts/check-search-path.mjs
       - name: Guardrail — private fields must not reach the client bundle
         run: |
           # snake_case names appear in rendered HTML, camelCase in the JS bundle;
